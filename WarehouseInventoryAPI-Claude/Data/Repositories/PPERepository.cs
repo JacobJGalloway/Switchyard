@@ -37,7 +37,7 @@ namespace WarehouseInventory_Claude.Data.Repositories
         public async Task<bool> DeleteBySKUIdAsync(string skuId)
         {
             List<PPE> items = await _context.PPE.Where(p => p.PartitionKey == skuId).ToListAsync();
-            if (items is null) return false;
+            if (items.Count == 0) return false;
             _context.PPE.RemoveRange(items);
             await _context.SaveChangesAsync();
             return true;
