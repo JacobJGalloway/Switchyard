@@ -69,6 +69,7 @@ export default function InventoryViewer() {
   const [stores, setStores] = useState<Store[]>([])
   const [selectedLocationId, setSelectedLocationId] = useState('')
   const [selectedTypes, setSelectedTypes] = useState<InventoryType[]>([...INVENTORY_TYPES])
+  const [projectedFilter, setProjectedFilter] = useState<'All' | 'Yes' | 'No'>('All')
   const [results, setResults] = useState<{ type: InventoryType; items: InventoryItem[] }[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -99,7 +100,12 @@ export default function InventoryViewer() {
         const items = await inventory.get<InventoryItem[]>(endpoint)
         return { type, items }
       })
-      setResults(await Promise.all(fetches))
+      const raw = await Promise.all(fetches)
+      setResults(raw.map(({ type, items }) => ({
+        type,
+        items: projectedFilter === 'All' ? items
+          : items.filter(i => i.projected === (projectedFilter === 'Yes')),
+      })))
     } catch {
       setError('Failed to load inventory.')
     } finally {
@@ -139,6 +145,16 @@ export default function InventoryViewer() {
             {locationOptions.map(o => (
               <option key={o.id} value={o.id}>{o.label}</option>
             ))}
+          </select>
+        </label>
+
+        <label>
+          Projected
+          <br />
+          <select value={projectedFilter} onChange={e => setProjectedFilter(e.target.value as 'All' | 'Yes' | 'No')}>
+            <option value="All">All</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
           </select>
         </label>
 
