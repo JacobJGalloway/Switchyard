@@ -15,5 +15,6 @@ namespace WarehouseLogistics_Claude.Models
         // Positive quantity = incoming; negative quantity = outgoing
         public required int Quantity { get; set; }
         public bool IsProcessed { get; set; } = false;
+        public DateTime? ProcessedDate { get; set; }
     }
 }

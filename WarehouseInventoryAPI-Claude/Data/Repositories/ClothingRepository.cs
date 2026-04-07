@@ -22,8 +22,25 @@ namespace WarehouseInventory_Claude.Data.Repositories
             return items;
         }
 
+        public async Task<List<Clothing>> GetByLocationAsync(string locationId)
+        {
+            return await _context.Clothing
+                .Where(c => c.LocationId == locationId)
+                .ToListAsync();
+        }
+
+        public async Task<List<Clothing>> GetByLocationAndSKUAsync(string locationId, string skuId)
+        {
+            return await _context.Clothing
+                .Where(c => c.LocationId == locationId && c.SKUMarker == skuId)
+                .ToListAsync();
+        }
+
         public async Task<Clothing> AddAsync(Clothing item)
         {
+            var warehouseId = Environment.GetEnvironmentVariable("LOCATION_ID") ?? string.Empty;
+            item.LocationId = warehouseId;
+            item.PartitionKey = $"{warehouseId}-{item.SKUMarker}-{Guid.NewGuid():N}";
             _context.Clothing.Add(item);
             return item;
         }
@@ -35,7 +52,19 @@ namespace WarehouseInventory_Claude.Data.Repositories
 
             var target = existingItems.FirstOrDefault(c => c.PartitionKey == item.PartitionKey)
                          ?? existingItems[0];
-            _context.Entry(target).CurrentValues.SetValues(item);
+
+            target.RowKey = item.RowKey;
+            target.SKUMarker = item.SKUMarker;
+            target.UnloadedDate = item.UnloadedDate;
+        }
+
+        public async Task PatchAsync(string partitionKey, bool? projected, DateTime? unloadedDate)
+        {
+            var target = await _context.Clothing.FindAsync(partitionKey);
+            if (target is null) return;
+
+            if (projected.HasValue) target.Projected = projected.Value;
+            if (unloadedDate.HasValue) target.UnloadedDate = unloadedDate.Value;
         }
 
         public async Task<bool> DeleteBySKUIdAsync(string skuId)
@@ -43,6 +72,14 @@ namespace WarehouseInventory_Claude.Data.Repositories
             List<Clothing> items = await _context.Clothing.Where(c => c.SKUMarker == skuId).ToListAsync();
             if (items.Count == 0) return false;
             _context.Clothing.RemoveRange(items);
+            return true;
+        }
+        public async Task<bool> DeleteByPartitionKeyAsync(string partitionKey)
+        {
+            var target = await _context.Clothing.FindAsync(partitionKey);
+            if (target is null) return false;
+
+            _context.Clothing.Remove(target);
             return true;
         }
     }

@@ -2,23 +2,20 @@ using Xunit;
 using Moq;
 using Microsoft.AspNetCore.Mvc;
 using WarehouseInventory_Claude.Controllers;
-using WarehouseInventory_Claude.Data.Interfaces;
 using WarehouseInventory_Claude.Models;
+using WarehouseInventory_Claude.Services.Interfaces;
 
 namespace WarehouseInventory_Claude.Tests.Controllers
 {
     public class ClothingControllerTests
     {
-        private readonly Mock<IUnitOfWork> _mockUoW;
-        private readonly Mock<IClothingRepository> _mockRepo;
+        private readonly Mock<IClothingService> _mockService;
         private readonly ClothingController _controller;
 
         public ClothingControllerTests()
         {
-            _mockUoW = new Mock<IUnitOfWork>();
-            _mockRepo = new Mock<IClothingRepository>();
-            _mockUoW.Setup(u => u.Clothing).Returns(_mockRepo.Object);
-            _controller = new ClothingController(_mockUoW.Object);
+            _mockService = new Mock<IClothingService>();
+            _controller = new ClothingController(_mockService.Object);
         }
 
         [Fact]
@@ -26,10 +23,10 @@ namespace WarehouseInventory_Claude.Tests.Controllers
         {
             var items = new List<Clothing>
             {
-                new() { PartitionKey = "pk1", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow },
-                new() { PartitionKey = "pk2", SKUMarker = "CLTH002", UnloadedDate = DateTime.UtcNow }
+                new() { PartitionKey = "WH001-CLTH001-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow },
+                new() { PartitionKey = "WH001-CLTH002-b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7", SKUMarker = "CLTH002", UnloadedDate = DateTime.UtcNow }
             };
-            _mockRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(items);
+            _mockService.Setup(s => s.GetAllAsync()).ReturnsAsync(items);
 
             var result = await _controller.GetAll();
 
@@ -38,86 +35,63 @@ namespace WarehouseInventory_Claude.Tests.Controllers
         }
 
         [Fact]
-        public async Task GetClothingBySKUId_ReturnsOkWithItems_WhenFound()
+        public async Task GetBySKUId_ReturnsOkWithItems_WhenFound()
         {
             var items = new List<Clothing>
             {
-                new() { PartitionKey = "pk1", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow }
+                new() { PartitionKey = "WH001-CLTH001-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow }
             };
-            _mockUoW.Setup(u => u.GetClothingBySKUIdAsync("CLTH001")).ReturnsAsync(items);
+            _mockService.Setup(s => s.GetBySKUIdAsync("CLTH001")).ReturnsAsync(items);
 
-            var result = await _controller.GetClothingBySKUIdAsync("CLTH001");
+            var result = await _controller.GetBySKUId("CLTH001");
 
             var ok = Assert.IsType<OkObjectResult>(result.Result);
             Assert.Equal(items, ok.Value);
         }
 
         [Fact]
-        public async Task GetClothingBySKUId_ReturnsEmptyList_WhenNotFound()
+        public async Task GetBySKUId_ReturnsEmptyList_WhenNotFound()
         {
-            _mockUoW.Setup(u => u.GetClothingBySKUIdAsync("CLTH999")).ReturnsAsync(new List<Clothing>());
+            _mockService.Setup(s => s.GetBySKUIdAsync("CLTH999")).ReturnsAsync(new List<Clothing>());
 
-            var result = await _controller.GetClothingBySKUIdAsync("CLTH999");
+            var result = await _controller.GetBySKUId("CLTH999");
 
-            var list = Assert.IsType<List<Clothing>>(result.Value);
+            var ok = Assert.IsType<OkObjectResult>(result.Result);
+            var list = Assert.IsType<List<Clothing>>(ok.Value);
             Assert.Empty(list);
         }
 
         [Fact]
-        public async Task Create_ReturnsCreatedAtAction_AndSavesChanges()
+        public async Task Create_ReturnsCreatedAtAction()
         {
-            var item = new Clothing { PartitionKey = "pk1", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow };
-            _mockRepo.Setup(r => r.AddAsync(item)).ReturnsAsync(item);
+            var item = new Clothing { PartitionKey = "WH001-CLTH001-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow };
+            _mockService.Setup(s => s.AddAsync(item)).ReturnsAsync(item);
 
             var result = await _controller.Create(item);
 
             Assert.IsType<CreatedAtActionResult>(result.Result);
-            _mockUoW.Verify(u => u.SaveChangesAsync(), Times.Once);
         }
 
         [Fact]
         public async Task UpdateBySKUId_ReturnsBadRequest_WhenSkuMismatch()
         {
-            var item = new Clothing { PartitionKey = "pk1", SKUMarker = "CLTH002", UnloadedDate = DateTime.UtcNow };
+            var item = new Clothing { PartitionKey = "WH001-CLTH002-b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7", SKUMarker = "CLTH002", UnloadedDate = DateTime.UtcNow };
 
             var result = await _controller.UpdateBySKUId("CLTH001", item);
 
             Assert.IsType<BadRequestResult>(result);
-            _mockUoW.Verify(u => u.SaveChangesAsync(), Times.Never);
+            _mockService.Verify(s => s.UpdateBySKUIdAsync(It.IsAny<string>(), It.IsAny<Clothing>()), Times.Never);
         }
 
         [Fact]
-        public async Task UpdateBySKUId_ReturnsNoContent_AndSavesChanges_WhenValid()
+        public async Task UpdateBySKUId_ReturnsNoContent_WhenValid()
         {
-            var item = new Clothing { PartitionKey = "pk1", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow };
-            _mockRepo.Setup(r => r.UpdateBySKUIdAsync("CLTH001", item)).Returns(Task.CompletedTask);
+            var item = new Clothing { PartitionKey = "WH001-CLTH001-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow };
+            _mockService.Setup(s => s.UpdateBySKUIdAsync("CLTH001", item)).Returns(Task.CompletedTask);
 
             var result = await _controller.UpdateBySKUId("CLTH001", item);
 
             Assert.IsType<NoContentResult>(result);
-            _mockUoW.Verify(u => u.SaveChangesAsync(), Times.Once);
-        }
-
-        [Fact]
-        public async Task DeleteBySKUId_ReturnsNotFound_WhenNotFound()
-        {
-            _mockRepo.Setup(r => r.DeleteBySKUIdAsync("CLTH999")).ReturnsAsync(false);
-
-            var result = await _controller.DeleteBySKUIdAsync("CLTH999");
-
-            Assert.IsType<NotFoundResult>(result);
-            _mockUoW.Verify(u => u.SaveChangesAsync(), Times.Never);
-        }
-
-        [Fact]
-        public async Task DeleteBySKUId_ReturnsNoContent_AndSavesChanges_WhenFound()
-        {
-            _mockRepo.Setup(r => r.DeleteBySKUIdAsync("CLTH001")).ReturnsAsync(true);
-
-            var result = await _controller.DeleteBySKUIdAsync("CLTH001");
-
-            Assert.IsType<NoContentResult>(result);
-            _mockUoW.Verify(u => u.SaveChangesAsync(), Times.Once);
         }
     }
 }

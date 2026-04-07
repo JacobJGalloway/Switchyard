@@ -1,6 +1,6 @@
 -- database: ../WarehouseData.db3
 
-CREATE TABLE IF NOT EXISTS BillOfLading (
+CREATE TABLE IF NOT EXISTS BillsOfLading (
     PartitionKey          TEXT NOT NULL UNIQUE PRIMARY KEY,
     TransactionId         TEXT NOT NULL UNIQUE DEFAULT '',
     Status                TEXT NOT NULL DEFAULT 'Pending',

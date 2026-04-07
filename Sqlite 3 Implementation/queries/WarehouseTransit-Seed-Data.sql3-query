@@ -4,10 +4,10 @@
 
 PRAGMA foreign_keys = ON;
 
-INSERT OR IGNORE INTO WarehouseTransit (OriginWarehouseId, DestinationWarehouseId, TransitDays) VALUES
+INSERT OR IGNORE INTO WarehouseTransit (PartitionKey, OriginWarehouseId, DestinationWarehouseId, TransitDays) VALUES
 ('WH001-WH002-ae6b518b5cae425c8466c110e46125cb', 'WH001', 'WH002', 1),
 ('WH001-WH003-a0ba6f6c93c5448fbb8eaa4563b78603', 'WH001', 'WH003', 1),
-('WH002-WH001-58b984d4e27c4c25af7ac6e690cfb18f','WH002', 'WH001', 1),
+('WH002-WH001-58b984d4e27c4c25af7ac6e690cfb18f', 'WH002', 'WH001', 1),
 ('WH002-WH003-3230a92dde9e40a6be9b539886d0f22e', 'WH002', 'WH003', 1),
-('WH003-WH001', 'WH003', 'WH001', 1),
-('WH003', 'WH002', 1);
+('WH003-WH001-c9d0e1f2a3b4c5d6e7f8a1b2c3d4e5f6', 'WH003', 'WH001', 1),
+('WH003-WH002-d0e1f2a3b4c5d6e7f8a1b2c3d4e5f6a7', 'WH003', 'WH002', 1);

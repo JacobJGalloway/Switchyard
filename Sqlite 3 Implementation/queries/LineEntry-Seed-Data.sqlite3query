@@ -9,7 +9,7 @@
 
 PRAGMA foreign_keys = ON;
 
-INSERT OR IGNORE INTO LineEntry (PartitionKey, TransactionId, LocationId, SKUMarker, Quantity, IsProcessed) VALUES
+INSERT OR IGNORE INTO LineEntries (PartitionKey, TransactionId, LocationId, SKUMarker, Quantity, IsProcessed) VALUES
 
 -- Transaction 1 (a1b2c3d4): WH001 → ST0001  [Chicago local delivery]
 ('a1b2c3d4-00000000000000000000000000000001', 'a1b2c3d4', 'WH001',  'CLTH001',  20, 0),

@@ -3,7 +3,9 @@
 CREATE TABLE IF NOT EXISTS Clothing (
     PartitionKey   TEXT NOT NULL UNIQUE PRIMARY KEY,
     RowKey         TEXT NOT NULL DEFAULT '',
+    LocationId     TEXT NOT NULL DEFAULT '',
     SKUMarker      TEXT NOT NULL DEFAULT '',
-    UnloadedDate   TEXT NOT NULL DEFAULT '',
+    UnloadedDate   TEXT    NOT NULL DEFAULT '',
+    Projected      INTEGER NOT NULL DEFAULT 1,
     FOREIGN KEY (SKUMarker) REFERENCES SKUCatalog(SKUMarker)
 );

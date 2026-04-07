@@ -1,34 +1,45 @@
 using Microsoft.AspNetCore.Mvc;
-using WarehouseInventory_Claude.Data.Interfaces;
 using WarehouseInventory_Claude.Models;
+using WarehouseInventory_Claude.Services.Interfaces;
 
 namespace WarehouseInventory_Claude.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ClothingController(IUnitOfWork unitOfWork) : ControllerBase
+    public class ClothingController(IClothingService clothingService) : ControllerBase
     {
-        private readonly IUnitOfWork _unitOfWork = unitOfWork;
+        private readonly IClothingService _clothingService = clothingService;
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Clothing>>> GetAll()
         {
-            return Ok(await _unitOfWork.Clothing.GetAllAsync());
+            return Ok(await _clothingService.GetAllAsync());
         }
 
         [HttpGet("{skuId}")]
-        public async Task<ActionResult<List<Clothing>>> GetClothingBySKUIdAsync(string skuId)
+        public async Task<ActionResult<List<Clothing>>> GetBySKUId(string skuId)
         {
-            var items = await _unitOfWork.GetClothingBySKUIdAsync(skuId);
-            if (items.Count == 0) return new List<Clothing>();
+            var items = await _clothingService.GetBySKUIdAsync(skuId);
+            if (items.Count == 0) return Ok(new List<Clothing>());
             return Ok(items);
+        }
+
+        [HttpGet("location/{locationId}")]
+        public async Task<ActionResult<List<Clothing>>> GetByLocationAsync(string locationId)
+        {
+            return Ok(await _clothingService.GetByLocationAsync(locationId));
+        }
+
+        [HttpGet("filter")]
+        public async Task<ActionResult<List<Clothing>>> GetByLocationAndSKU([FromQuery] string locationId, [FromQuery] string skuId)
+        {
+            return Ok(await _clothingService.GetByLocationAndSKUAsync(locationId, skuId));
         }
 
         [HttpPost]
         public async Task<ActionResult<Clothing>> Create(Clothing item)
         {
-            var created = await _unitOfWork.Clothing.AddAsync(item);
-            await _unitOfWork.SaveChangesAsync();
+            var created = await _clothingService.AddAsync(item);
             return CreatedAtAction(nameof(Create), new { id = created.PartitionKey }, created);
         }
 
@@ -36,16 +47,21 @@ namespace WarehouseInventory_Claude.Controllers
         public async Task<IActionResult> UpdateBySKUId(string skuId, Clothing item)
         {
             if (skuId != item.SKUMarker) return BadRequest();
-            await _unitOfWork.Clothing.UpdateBySKUIdAsync(skuId, item);
-            await _unitOfWork.SaveChangesAsync();
+            await _clothingService.UpdateBySKUIdAsync(skuId, item);
             return NoContent();
         }
 
-        [HttpDelete("{skuId}")]
-        public async Task<IActionResult> DeleteBySKUIdAsync(string skuId)
+        [HttpPatch("item/{partitionKey}")]
+        public async Task<IActionResult> Patch(string partitionKey, [FromBody] InventoryPatchRequest request)
         {
-            if (!await _unitOfWork.Clothing.DeleteBySKUIdAsync(skuId)) return NotFound();
-            await _unitOfWork.SaveChangesAsync();
+            await _clothingService.PatchAsync(partitionKey, request.Projected, request.UnloadedDate);
+            return NoContent();
+        }
+
+        [HttpDelete("item/{partitionKey}")]
+        public async Task<IActionResult> DeleteByPartitionKey(string partitionKey)
+        {
+            if (!await _clothingService.DeleteByPartitionKeyAsync(partitionKey)) return NotFound();
             return NoContent();
         }
     }

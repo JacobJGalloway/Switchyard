@@ -1,12 +1,13 @@
 -- database: ../WarehouseData.db3
 
-CREATE TABLE IF NOT EXISTS LineEntry (
+CREATE TABLE IF NOT EXISTS LineEntries (
     PartitionKey  TEXT    NOT NULL UNIQUE PRIMARY KEY,
     TransactionId TEXT    NOT NULL DEFAULT '',
     LocationId    TEXT    NOT NULL DEFAULT '',
     SKUMarker     TEXT    NOT NULL DEFAULT '',
     Quantity      INTEGER NOT NULL DEFAULT 0,
     IsProcessed   INTEGER NOT NULL DEFAULT 0,
-    FOREIGN KEY (TransactionId) REFERENCES BillOfLading(TransactionId),
+    ProcessedDate TEXT    NULL,
+    FOREIGN KEY (TransactionId) REFERENCES BillsOfLading(TransactionId),
     FOREIGN KEY (SKUMarker) REFERENCES SKUCatalog(SKUMarker)
 );

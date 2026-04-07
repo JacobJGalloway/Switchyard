@@ -36,8 +36,8 @@ namespace WarehouseInventory_Claude.Tests.Repositories
         public async Task GetAllAsync_ReturnsAllItems()
         {
             _context.Clothing.AddRange(
-                new Clothing { PartitionKey = "pk1", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow },
-                new Clothing { PartitionKey = "pk2", SKUMarker = "CLTH002", UnloadedDate = DateTime.UtcNow }
+                new Clothing { PartitionKey = "WH001-CLTH001-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow },
+                new Clothing { PartitionKey = "WH001-CLTH002-b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7", SKUMarker = "CLTH002", UnloadedDate = DateTime.UtcNow }
             );
             await _context.SaveChangesAsync();
 
@@ -50,9 +50,9 @@ namespace WarehouseInventory_Claude.Tests.Repositories
         public async Task GetBySKUIdAsync_ReturnsMatchingItems_WhenFound()
         {
             _context.Clothing.AddRange(
-                new Clothing { PartitionKey = "pk1", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow },
-                new Clothing { PartitionKey = "pk2", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow },
-                new Clothing { PartitionKey = "pk3", SKUMarker = "CLTH002", UnloadedDate = DateTime.UtcNow }
+                new Clothing { PartitionKey = "WH001-CLTH001-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow },
+                new Clothing { PartitionKey = "WH001-CLTH001-b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow },
+                new Clothing { PartitionKey = "WH001-CLTH002-c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8", SKUMarker = "CLTH002", UnloadedDate = DateTime.UtcNow }
             );
             await _context.SaveChangesAsync();
 
@@ -73,7 +73,7 @@ namespace WarehouseInventory_Claude.Tests.Repositories
         [Fact]
         public async Task AddAsync_StagesItem_PersistedAfterSave()
         {
-            var item = new Clothing { PartitionKey = "pk1", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow };
+            var item = new Clothing { SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow };
 
             await _repository.AddAsync(item);
             await _context.SaveChangesAsync();
@@ -84,45 +84,45 @@ namespace WarehouseInventory_Claude.Tests.Repositories
         [Fact]
         public async Task UpdateBySKUIdAsync_UpdatesByPartitionKey_WhenMatch()
         {
-            var original = new Clothing { PartitionKey = "pk1", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow };
-            var other = new Clothing { PartitionKey = "pk2", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow };
+            var original = new Clothing { PartitionKey = "WH001-CLTH001-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow };
+            var other = new Clothing { PartitionKey = "WH001-CLTH001-b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow };
             _context.Clothing.AddRange(original, other);
             await _context.SaveChangesAsync();
 
-            var updated = new Clothing { PartitionKey = "pk1", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow.AddDays(1) };
+            var updated = new Clothing { PartitionKey = "WH001-CLTH001-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow.AddDays(1) };
             await _repository.UpdateBySKUIdAsync("CLTH001", updated);
             await _context.SaveChangesAsync();
 
-            var result = await _context.Clothing.FindAsync("pk1");
+            var result = await _context.Clothing.FindAsync("WH001-CLTH001-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6");
             Assert.Equal(updated.UnloadedDate, result!.UnloadedDate);
         }
 
         [Fact]
         public async Task UpdateBySKUIdAsync_FallsBackToFirst_WhenNoPartitionKeyMatch()
         {
-            var item = new Clothing { PartitionKey = "pk1", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow };
+            var item = new Clothing { PartitionKey = "WH001-CLTH001-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow };
             _context.Clothing.Add(item);
             await _context.SaveChangesAsync();
 
-            var updated = new Clothing { PartitionKey = "pk-nomatch", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow.AddDays(1) };
+            var updated = new Clothing { PartitionKey = "WH001-CLTH001-ffffffffffffffffffffffffffffffff", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow.AddDays(1) };
             await _repository.UpdateBySKUIdAsync("CLTH001", updated);
             await _context.SaveChangesAsync();
 
-            var result = await _context.Clothing.FindAsync("pk1");
+            var result = await _context.Clothing.FindAsync("WH001-CLTH001-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6");
             Assert.Equal(updated.UnloadedDate, result!.UnloadedDate);
         }
 
         [Fact]
         public async Task UpdateBySKUIdAsync_DoesNothing_WhenSkuNotFound()
         {
-            var item = new Clothing { PartitionKey = "pk1", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow };
+            var item = new Clothing { PartitionKey = "WH001-CLTH001-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow };
             _context.Clothing.Add(item);
             await _context.SaveChangesAsync();
 
-            await _repository.UpdateBySKUIdAsync("CLTH999", new Clothing { PartitionKey = "pk1", SKUMarker = "CLTH999", UnloadedDate = DateTime.UtcNow.AddDays(1) });
+            await _repository.UpdateBySKUIdAsync("CLTH999", new Clothing { PartitionKey = "WH001-CLTH999-ffffffffffffffffffffffffffffffff", SKUMarker = "CLTH999", UnloadedDate = DateTime.UtcNow.AddDays(1) });
             await _context.SaveChangesAsync();
 
-            var result = await _context.Clothing.FindAsync("pk1");
+            var result = await _context.Clothing.FindAsync("WH001-CLTH001-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6");
             Assert.Equal(item.UnloadedDate, result!.UnloadedDate);
         }
 
@@ -138,9 +138,9 @@ namespace WarehouseInventory_Claude.Tests.Repositories
         public async Task DeleteBySKUIdAsync_ReturnsTrue_AndRemovesAllMatchingItems()
         {
             _context.Clothing.AddRange(
-                new Clothing { PartitionKey = "pk1", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow },
-                new Clothing { PartitionKey = "pk2", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow },
-                new Clothing { PartitionKey = "pk3", SKUMarker = "CLTH002", UnloadedDate = DateTime.UtcNow }
+                new Clothing { PartitionKey = "WH001-CLTH001-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow },
+                new Clothing { PartitionKey = "WH001-CLTH001-b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7", SKUMarker = "CLTH001", UnloadedDate = DateTime.UtcNow },
+                new Clothing { PartitionKey = "WH001-CLTH002-c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8", SKUMarker = "CLTH002", UnloadedDate = DateTime.UtcNow }
             );
             await _context.SaveChangesAsync();
 

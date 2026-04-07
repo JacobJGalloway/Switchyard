@@ -1,11 +1,11 @@
 -- database: ./WarehouseData.db3
 
 CREATE TABLE IF NOT EXISTS WarehouseTransit (
-    PartitionKey            TEXT NOT NULL UNIQUE PRIMARY KEY,
-    OriginWarehouseId       TEXT NOT NULL,
-    DestinationWarehouseId  TEXT NOT NULL,
+    PartitionKey            TEXT    NOT NULL UNIQUE PRIMARY KEY,
+    OriginWarehouseId       TEXT    NOT NULL,
+    DestinationWarehouseId  TEXT    NOT NULL,
     TransitDays             INTEGER NOT NULL DEFAULT 1,
-    PRIMARY KEY (OriginWarehouseId, DestinationWarehouseId),
+    UNIQUE (OriginWarehouseId, DestinationWarehouseId),
     FOREIGN KEY (OriginWarehouseId) REFERENCES Warehouses(WarehouseId),
     FOREIGN KEY (DestinationWarehouseId) REFERENCES Warehouses(WarehouseId)
 );

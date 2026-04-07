@@ -9,13 +9,13 @@ namespace WarehouseInventory_Claude.Data
     {
         public DbSet<Clothing> Clothing => Set<Clothing>();
         public DbSet<PPE> PPE => Set<PPE>();
-        public DbSet<Tool> Tools => Set<Tool>();
+        public DbSet<Tool> Tool => Set<Tool>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Clothing>().HasKey(c => c.PartitionKey);
-            modelBuilder.Entity<PPE>().HasKey(p => p.PartitionKey);
-            modelBuilder.Entity<Tool>().HasKey(t => t.PartitionKey);
+            modelBuilder.Entity<Clothing>().ToTable("Clothing").HasKey(c => c.PartitionKey);
+            modelBuilder.Entity<PPE>().ToTable("PPE").HasKey(p => p.PartitionKey);
+            modelBuilder.Entity<Tool>().ToTable("Tools").HasKey(t => t.PartitionKey);
         }
 
         public async Task<List<Clothing>> GetClothingBySKUIdsync(string skuId)
@@ -38,7 +38,7 @@ namespace WarehouseInventory_Claude.Data
 
         public async Task<List<Tool>> GetToolBySKUIdsync(string skuId)
         {
-            var response = await Tools.Where(t => t.SKUMarker == skuId).ToListAsync();
+            var response = await Tool.Where(t => t.SKUMarker == skuId).ToListAsync();
 
             if (response.Count == 0) return new List<Tool>();
 

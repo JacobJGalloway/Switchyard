@@ -778,3 +778,6 @@ INSERT OR IGNORE INTO Clothing (PartitionKey, RowKey, SKUMarker, UnloadedDate) V
 ('WH003-CLTH025-0000000000000000000000000000001b', 'CLTH025', 'CLTH025', '2025-04-02T09:00:00Z'),
 ('WH003-CLTH025-0000000000000000000000000000001c', 'CLTH025', 'CLTH025', '2025-04-02T09:00:00Z'),
 ('WH003-CLTH025-0000000000000000000000000000001d', 'CLTH025', 'CLTH025', '2025-04-02T09:00:00Z');
+
+-- Set LocationId from PartitionKey prefix and mark all seed records as confirmed inventory
+UPDATE Clothing SET LocationId = SUBSTR(PartitionKey, 1, 5), Projected = 0 WHERE LocationId = '';

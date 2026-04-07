@@ -2,23 +2,20 @@ using Xunit;
 using Moq;
 using Microsoft.AspNetCore.Mvc;
 using WarehouseInventory_Claude.Controllers;
-using WarehouseInventory_Claude.Data.Interfaces;
 using WarehouseInventory_Claude.Models;
+using WarehouseInventory_Claude.Services.Interfaces;
 
 namespace WarehouseInventory_Claude.Tests.Controllers
 {
     public class ToolControllerTests
     {
-        private readonly Mock<IUnitOfWork> _mockUoW;
-        private readonly Mock<IToolRepository> _mockRepo;
+        private readonly Mock<IToolService> _mockService;
         private readonly ToolController _controller;
 
         public ToolControllerTests()
         {
-            _mockUoW = new Mock<IUnitOfWork>();
-            _mockRepo = new Mock<IToolRepository>();
-            _mockUoW.Setup(u => u.Tools).Returns(_mockRepo.Object);
-            _controller = new ToolController(_mockUoW.Object);
+            _mockService = new Mock<IToolService>();
+            _controller = new ToolController(_mockService.Object);
         }
 
         [Fact]
@@ -26,10 +23,10 @@ namespace WarehouseInventory_Claude.Tests.Controllers
         {
             var items = new List<Tool>
             {
-                new() { PartitionKey = "pk1", SKUMarker = "PWTL001", UnloadedDate = DateTime.UtcNow },
-                new() { PartitionKey = "pk2", SKUMarker = "PWTL002", UnloadedDate = DateTime.UtcNow }
+                new() { PartitionKey = "WH001-PWTL001-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6", SKUMarker = "PWTL001", UnloadedDate = DateTime.UtcNow },
+                new() { PartitionKey = "WH001-PWTL002-b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7", SKUMarker = "PWTL002", UnloadedDate = DateTime.UtcNow }
             };
-            _mockRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(items);
+            _mockService.Setup(s => s.GetAllAsync()).ReturnsAsync(items);
 
             var result = await _controller.GetAll();
 
@@ -42,11 +39,11 @@ namespace WarehouseInventory_Claude.Tests.Controllers
         {
             var items = new List<Tool>
             {
-                new() { PartitionKey = "pk1", SKUMarker = "PWTL001", UnloadedDate = DateTime.UtcNow }
+                new() { PartitionKey = "WH001-PWTL001-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6", SKUMarker = "PWTL001", UnloadedDate = DateTime.UtcNow }
             };
-            _mockUoW.Setup(u => u.GetToolBySKUIdAsync("PWTL001")).ReturnsAsync(items);
+            _mockService.Setup(s => s.GetBySKUIdAsync("PWTL001")).ReturnsAsync(items);
 
-            var result = await _controller.GetBySKUIdAsync("PWTL001");
+            var result = await _controller.GetBySKUId("PWTL001");
 
             var ok = Assert.IsType<OkObjectResult>(result.Result);
             Assert.Equal(items, ok.Value);
@@ -55,69 +52,46 @@ namespace WarehouseInventory_Claude.Tests.Controllers
         [Fact]
         public async Task GetBySKUId_ReturnsEmptyList_WhenNotFound()
         {
-            _mockUoW.Setup(u => u.GetToolBySKUIdAsync("PWTL999")).ReturnsAsync(new List<Tool>());
+            _mockService.Setup(s => s.GetBySKUIdAsync("PWTL999")).ReturnsAsync(new List<Tool>());
 
-            var result = await _controller.GetBySKUIdAsync("PWTL999");
+            var result = await _controller.GetBySKUId("PWTL999");
 
-            var list = Assert.IsType<List<Tool>>(result.Value);
+            var ok = Assert.IsType<OkObjectResult>(result.Result);
+            var list = Assert.IsType<List<Tool>>(ok.Value);
             Assert.Empty(list);
         }
 
         [Fact]
-        public async Task Create_ReturnsCreatedAtAction_AndSavesChanges()
+        public async Task Create_ReturnsCreatedAtAction()
         {
-            var item = new Tool { PartitionKey = "pk1", SKUMarker = "PWTL001", UnloadedDate = DateTime.UtcNow };
-            _mockRepo.Setup(r => r.AddAsync(item)).ReturnsAsync(item);
+            var item = new Tool { PartitionKey = "WH001-PWTL001-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6", SKUMarker = "PWTL001", UnloadedDate = DateTime.UtcNow };
+            _mockService.Setup(s => s.AddAsync(item)).ReturnsAsync(item);
 
             var result = await _controller.Create(item);
 
             Assert.IsType<CreatedAtActionResult>(result.Result);
-            _mockUoW.Verify(u => u.SaveChangesAsync(), Times.Once);
         }
 
         [Fact]
         public async Task UpdateBySKUId_ReturnsBadRequest_WhenSkuMismatch()
         {
-            var item = new Tool { PartitionKey = "pk1", SKUMarker = "PWTL002", UnloadedDate = DateTime.UtcNow };
+            var item = new Tool { PartitionKey = "WH001-PWTL002-b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7", SKUMarker = "PWTL002", UnloadedDate = DateTime.UtcNow };
 
             var result = await _controller.UpdateBySKUId("PWTL001", item);
 
             Assert.IsType<BadRequestResult>(result);
-            _mockUoW.Verify(u => u.SaveChangesAsync(), Times.Never);
+            _mockService.Verify(s => s.UpdateBySKUIdAsync(It.IsAny<string>(), It.IsAny<Tool>()), Times.Never);
         }
 
         [Fact]
-        public async Task UpdateBySKUId_ReturnsNoContent_AndSavesChanges_WhenValid()
+        public async Task UpdateBySKUId_ReturnsNoContent_WhenValid()
         {
-            var item = new Tool { PartitionKey = "pk1", SKUMarker = "PWTL001", UnloadedDate = DateTime.UtcNow };
-            _mockRepo.Setup(r => r.UpdateBySKUIdAsync("PWTL001", item)).Returns(Task.CompletedTask);
+            var item = new Tool { PartitionKey = "WH001-PWTL001-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6", SKUMarker = "PWTL001", UnloadedDate = DateTime.UtcNow };
+            _mockService.Setup(s => s.UpdateBySKUIdAsync("PWTL001", item)).Returns(Task.CompletedTask);
 
             var result = await _controller.UpdateBySKUId("PWTL001", item);
 
             Assert.IsType<NoContentResult>(result);
-            _mockUoW.Verify(u => u.SaveChangesAsync(), Times.Once);
-        }
-
-        [Fact]
-        public async Task DeleteBySKUId_ReturnsNotFound_WhenNotFound()
-        {
-            _mockRepo.Setup(r => r.DeleteBySKUIdAsync("PWTL999")).ReturnsAsync(false);
-
-            var result = await _controller.DeleteBySKUId("PWTL999");
-
-            Assert.IsType<NotFoundResult>(result);
-            _mockUoW.Verify(u => u.SaveChangesAsync(), Times.Never);
-        }
-
-        [Fact]
-        public async Task DeleteBySKUId_ReturnsNoContent_AndSavesChanges_WhenFound()
-        {
-            _mockRepo.Setup(r => r.DeleteBySKUIdAsync("PWTL001")).ReturnsAsync(true);
-
-            var result = await _controller.DeleteBySKUId("PWTL001");
-
-            Assert.IsType<NoContentResult>(result);
-            _mockUoW.Verify(u => u.SaveChangesAsync(), Times.Once);
         }
     }
 }
