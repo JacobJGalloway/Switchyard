@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WarehouseLogistics_Claude.Models;
 using WarehouseLogistics_Claude.Services.Interfaces;
 
 namespace WarehouseLogistics_Claude.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class BillOfLadingController(IBillOfLadingService billOfLadingService) : ControllerBase

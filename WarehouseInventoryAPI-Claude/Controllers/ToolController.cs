@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WarehouseInventory_Claude.Models;
 using WarehouseInventory_Claude.Services.Interfaces;
 
 namespace WarehouseInventory_Claude.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class ToolController(IToolService toolService) : ControllerBase
