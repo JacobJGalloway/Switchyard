@@ -13,24 +13,28 @@ namespace WarehouseInventory_Claude.Controllers
         private readonly IToolService _toolService = toolService;
 
         [HttpGet]
+        [Authorize(Policy = "ReadInventory")]
         public async Task<ActionResult<IEnumerable<Tool>>> GetAll()
         {
             return Ok(await _toolService.GetAllAsync());
         }
 
         [HttpGet("location/{locationId}")]
+        [Authorize(Policy = "ReadInventory")]
         public async Task<ActionResult<List<Tool>>> GetByLocationAsync(string locationId)
         {
             return Ok(await _toolService.GetByLocationAsync(locationId));
         }
 
         [HttpGet("filter")]
+        [Authorize(Policy = "ReadInventory")]
         public async Task<ActionResult<List<Tool>>> GetByLocationAndSKU([FromQuery] string locationId, [FromQuery] string skuId)
         {
             return Ok(await _toolService.GetByLocationAndSKUAsync(locationId, skuId));
         }
 
         [HttpGet("{skuId}")]
+        [Authorize(Policy = "ReadInventory")]
         public async Task<ActionResult<List<Tool>>> GetBySKUId(string skuId)
         {
             var items = await _toolService.GetBySKUIdAsync(skuId);

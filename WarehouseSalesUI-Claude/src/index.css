@@ -46,6 +46,8 @@
   --social-bg: rgba(47, 48, 58, 0.5);
   --brand-blue: #3a73c1;
   --nav-text: #eeeeee;
+  --surface: #4a494c;
+  --table-border: #6b6a6e;
   --shadow:
     rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
 }

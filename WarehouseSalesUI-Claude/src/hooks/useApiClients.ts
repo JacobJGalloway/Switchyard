@@ -4,7 +4,7 @@ import { useAccessToken } from './useAccessToken'
 export function useApiClients() {
   const { getToken } = useAccessToken()
 
-  return {
+return {
     inventory: createInventoryClient(getToken),
     logistics: createLogisticsClient(getToken),
   }

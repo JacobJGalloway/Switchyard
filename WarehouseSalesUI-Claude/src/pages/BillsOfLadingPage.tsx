@@ -1,19 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useApiClients } from '../hooks/useApiClients'
 import type { BillOfLading, LineEntry } from '../types'
-
-const cell: React.CSSProperties = {
-  border: '1px solid var(--table-border)',
-  padding: '0.4rem 0.8rem',
-  background: 'var(--surface)',
-  color: '#08060d',
-}
-
-const headCell: React.CSSProperties = {
-  ...cell,
-  fontWeight: 600,
-  textAlign: 'left',
-}
+import styles from './BillsOfLadingPage.module.css'
 
 interface ModalState {
   transactionId: string
@@ -49,7 +37,7 @@ export default function BillsOfLadingPage() {
   }
 
   return (
-    <main style={{ padding: '1rem', textAlign: 'left' }}>
+    <main className={styles.page}>
       <h2>Bills of Lading</h2>
 
       {loading && <p>Loading...</p>}
@@ -60,23 +48,23 @@ export default function BillsOfLadingPage() {
       )}
 
       {bols.length > 0 && (
-        <table style={{ borderCollapse: 'collapse', width: '100%', marginTop: '1rem' }}>
+        <table className={styles.table}>
           <thead>
             <tr>
               {['Transaction ID', 'Status', 'Customer', 'Destination', ''].map(h => (
-                <th key={h} style={headCell}>{h}</th>
+                <th key={h} className={styles.th}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {bols.map(bol => (
               <tr key={bol.partitionKey}>
-                <td style={cell}>{bol.transactionId}</td>
-                <td style={cell}>{bol.status}</td>
-                <td style={cell}>{bol.customerFirstName} {bol.customerLastName}</td>
-                <td style={cell}>{bol.city}, {bol.state}</td>
-                <td style={{ ...cell, textAlign: 'center' }}>
-                  <button onClick={() => openModal(bol.transactionId)}>View</button>
+                <td className={styles.td}>{bol.transactionId}</td>
+                <td className={styles.td}>{bol.status}</td>
+                <td className={styles.td}>{bol.customerFirstName} {bol.customerLastName}</td>
+                <td className={styles.td}>{bol.city}, {bol.state}</td>
+                <td className={styles.tdCenter}>
+                  <button className={styles.viewBtn} onClick={() => openModal(bol.transactionId)}>View</button>
                 </td>
               </tr>
             ))}
@@ -85,34 +73,15 @@ export default function BillsOfLadingPage() {
       )}
 
       {modal && (
-        <div style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 200,
-        }}>
-          <div style={{
-            background: 'var(--bg)',
-            border: '1px solid var(--border)',
-            borderRadius: '8px',
-            padding: '1.5rem',
-            minWidth: '560px',
-            maxWidth: '90vw',
-            maxHeight: '80vh',
-            overflowY: 'auto',
-            position: 'relative',
-          }}>
+        <div className={styles.overlay}>
+          <div className={styles.modal}>
             <button
+              className={styles.closeBtn}
               onClick={() => setModal(null)}
-              style={{
-                position: 'absolute', top: '0.75rem', right: '0.75rem',
-                background: 'none', border: 'none', cursor: 'pointer',
-                fontSize: '1.2rem', color: 'var(--text-h)',
-              }}
               aria-label="Close"
             >✕</button>
 
-            <h2 style={{ marginTop: 0, marginBottom: '1rem' }}>
+            <h2 className={styles.modalTitle}>
               Line Entries — {modal.transactionId}
             </h2>
 
@@ -123,22 +92,22 @@ export default function BillsOfLadingPage() {
             )}
 
             {!modalLoading && modal.entries.length > 0 && (
-              <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+              <table className={styles.table} style={{ marginTop: 0 }}>
                 <thead>
                   <tr>
                     {['Location ID', 'SKU', 'Qty', 'Processed', 'Processed Date'].map(h => (
-                      <th key={h} style={headCell}>{h}</th>
+                      <th key={h} className={styles.th}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {modal.entries.map(entry => (
                     <tr key={entry.partitionKey}>
-                      <td style={cell}>{entry.locationId}</td>
-                      <td style={cell}>{entry.skuMarker}</td>
-                      <td style={cell}>{entry.quantity}</td>
-                      <td style={cell}>{entry.isProcessed ? 'Yes' : 'No'}</td>
-                      <td style={cell}>
+                      <td className={styles.td}>{entry.locationId}</td>
+                      <td className={styles.td}>{entry.skuMarker}</td>
+                      <td className={styles.td}>{entry.quantity}</td>
+                      <td className={styles.td}>{entry.isProcessed ? 'Yes' : 'No'}</td>
+                      <td className={styles.td}>
                         {entry.processedDate
                           ? new Date(entry.processedDate).toLocaleDateString()
                           : '—'}
@@ -149,7 +118,7 @@ export default function BillsOfLadingPage() {
               </table>
             )}
 
-            <div style={{ marginTop: '1rem', textAlign: 'right' }}>
+            <div className={styles.modalFooter}>
               <button onClick={() => setModal(null)}>Close</button>
             </div>
           </div>

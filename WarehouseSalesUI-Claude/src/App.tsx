@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import InventoryPage from './pages/InventoryPage'
 import BillsOfLadingPage from './pages/BillsOfLadingPage'
+import UsersPage from './pages/UsersPage'
 
 export default function App() {
   return (
@@ -14,10 +15,19 @@ export default function App() {
         <ProtectedRoute><Layout><DashboardPage /></Layout></ProtectedRoute>
       } />
       <Route path="/inventory" element={
-        <ProtectedRoute><Layout><InventoryPage /></Layout></ProtectedRoute>
+        <ProtectedRoute permission="canReadInventory">
+          <Layout><InventoryPage /></Layout>
+        </ProtectedRoute>
       } />
       <Route path="/bills-of-lading" element={
-        <ProtectedRoute><Layout><BillsOfLadingPage /></Layout></ProtectedRoute>
+        <ProtectedRoute permission="canReadBOL">
+          <Layout><BillsOfLadingPage /></Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/users" element={
+        <ProtectedRoute permission="canManageUsers">
+          <Layout><UsersPage /></Layout>
+        </ProtectedRoute>
       } />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

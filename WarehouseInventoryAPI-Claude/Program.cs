@@ -25,7 +25,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.Audience = builder.Configuration["Auth0:Audience"];
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("ReadInventory",
+        policy => policy.RequireClaim("permissions", "read:inventory"));
+});
 
 var dbPath = Path.Combine(builder.Environment.ContentRootPath, "..", "Sqlite 3 Implementation", "WarehouseData.db3");
 builder.Services.AddDbContext<InventoryContext>(options => options.UseSqlite($"Data Source={dbPath}"));

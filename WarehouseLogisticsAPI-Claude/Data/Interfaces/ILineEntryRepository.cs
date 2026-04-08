@@ -9,5 +9,6 @@ namespace WarehouseLogistics_Claude.Data.Interfaces
         Task<LineEntry> AddAsync(LineEntry lineEntry);
         Task UpdateLineEntryAsync(LineEntry lineEntry);
         Task<bool> DeleteByTransactionIdAsync(string transactionId);
+        Task<bool> DeleteByLocationAsync(string transactionId, string locationId);
     }
 }

@@ -13,12 +13,14 @@ namespace WarehouseInventory_Claude.Controllers
         private readonly IPPEService _ppeService = ppeService;
 
         [HttpGet]
+        [Authorize(Policy = "ReadInventory")]
         public async Task<ActionResult<IEnumerable<PPE>>> GetAll()
         {
             return Ok(await _ppeService.GetAllAsync());
         }
 
         [HttpGet("{skuId}")]
+        [Authorize(Policy = "ReadInventory")]
         public async Task<ActionResult<List<PPE>>> GetBySKUId(string skuId)
         {
             var items = await _ppeService.GetBySKUIdAsync(skuId);
@@ -27,12 +29,14 @@ namespace WarehouseInventory_Claude.Controllers
         }
 
         [HttpGet("location/{locationId}")]
+        [Authorize(Policy = "ReadInventory")]
         public async Task<ActionResult<List<PPE>>> GetByLocationAsync(string locationId)
         {
             return Ok(await _ppeService.GetByLocationAsync(locationId));
         }
 
         [HttpGet("filter")]
+        [Authorize(Policy = "ReadInventory")]
         public async Task<ActionResult<List<PPE>>> GetByLocationAndSKU([FromQuery] string locationId, [FromQuery] string skuId)
         {
             return Ok(await _ppeService.GetByLocationAndSKUAsync(locationId, skuId));

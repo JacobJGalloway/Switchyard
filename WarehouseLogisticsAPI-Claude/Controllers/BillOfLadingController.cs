@@ -13,10 +13,12 @@ namespace WarehouseLogistics_Claude.Controllers
         private readonly IBillOfLadingService _billOfLadingService = billOfLadingService;
 
         [HttpGet]
+        [Authorize(Policy = "ReadBOL")]
         public async Task<ActionResult<IEnumerable<BillOfLading>>> GetAllAsync()
             => Ok(await _billOfLadingService.GetAllAsync());
 
         [HttpGet("{transactionId}")]
+        [Authorize(Policy = "ReadBOL")]
         public async Task<ActionResult<BillOfLading>> GetByTransactionIdAsync(string transactionId)
         {
             var bol = await _billOfLadingService.GetByTransactionIdAsync(transactionId);
@@ -25,10 +27,12 @@ namespace WarehouseLogistics_Claude.Controllers
         }
 
         [HttpGet("{transactionId}/line-entry")]
+        [Authorize(Policy = "ReadBOL")]
         public async Task<ActionResult<List<LineEntry>>> GetLineEntriesAsync(string transactionId)
             => Ok(await _billOfLadingService.GetLineEntriesByTransactionIdAsync(transactionId));
 
         [HttpPost]
+        [Authorize(Policy = "CreateBOL")]
         public async Task<IActionResult> Create([FromBody] BillOfLading billOfLading)
         {
             try
@@ -43,10 +47,30 @@ namespace WarehouseLogistics_Claude.Controllers
         }
 
         [HttpPost("{transactionId}/process/{locationId}")]
+        [Authorize(Policy = "ModifyBOL")]
         public async Task<IActionResult> ProcessLocationStop(string transactionId, string locationId)
         {
             await _billOfLadingService.ProcessLocationStop(transactionId, locationId);
             return NoContent();
+        }
+
+        [HttpPost("{transactionId}/replace-stop")]
+        [Authorize(Policy = "ModifyBOL")]
+        public async Task<IActionResult> ReplaceLocationStopAsync(string transactionId, [FromBody] ReplaceStopRequest request)
+        {
+            try
+            {
+                await _billOfLadingService.ReplaceLocationStopAsync(transactionId, request.OldLocationId, request.NewLocationId);
+                return NoContent();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(ex.Message);
+            }
         }
     }
 }

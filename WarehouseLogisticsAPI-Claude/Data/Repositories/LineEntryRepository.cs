@@ -42,5 +42,16 @@ namespace WarehouseLogistics_Claude.Data.Repositories
             _context.LineEntries.RemoveRange(entries);
             return true;
         }
+
+        public async Task<bool> DeleteByLocationAsync(string transactionId, string locationId)
+        {
+            var entries = await _context.LineEntries
+                .Where(le => le.TransactionId == transactionId && le.LocationId == locationId)
+                .ToListAsync();
+            if (entries.Count == 0) return false;
+
+            _context.LineEntries.RemoveRange(entries);
+            return true;
+        }
     }
 }

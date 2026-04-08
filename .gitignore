@@ -1,0 +1,27 @@
+# Build output
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+.vs/
+
+# Environment-specific appsettings (may contain secrets)
+appsettings.Development.json
+appsettings.Production.json
+appsettings.Local.json
+
+# .NET user secrets
+secrets.json
+
+# Node / Vite
+node_modules/
+dist/
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db

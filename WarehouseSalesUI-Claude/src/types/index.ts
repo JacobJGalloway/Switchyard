@@ -44,3 +44,23 @@ export interface BillOfLading {
   state: string
   lineEntries: LineEntry[]
 }
+
+export interface AppUser {
+  userId: string
+  email: string
+  name: string
+  role: string
+  warehouseId: string
+  storeId: string
+  blocked: boolean
+}
+
+export interface CreateUserRequest {
+  email: string
+  password: string
+  firstName: string
+  lastName: string
+  role: string
+  warehouseId: string
+  storeId: string
+}

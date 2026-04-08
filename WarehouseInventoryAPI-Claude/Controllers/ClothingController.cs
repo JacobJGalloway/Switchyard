@@ -13,12 +13,14 @@ namespace WarehouseInventory_Claude.Controllers
         private readonly IClothingService _clothingService = clothingService;
 
         [HttpGet]
+        [Authorize(Policy = "ReadInventory")]
         public async Task<ActionResult<IEnumerable<Clothing>>> GetAll()
         {
             return Ok(await _clothingService.GetAllAsync());
         }
 
         [HttpGet("{skuId}")]
+        [Authorize(Policy = "ReadInventory")]
         public async Task<ActionResult<List<Clothing>>> GetBySKUId(string skuId)
         {
             var items = await _clothingService.GetBySKUIdAsync(skuId);
@@ -27,12 +29,14 @@ namespace WarehouseInventory_Claude.Controllers
         }
 
         [HttpGet("location/{locationId}")]
+        [Authorize(Policy = "ReadInventory")]
         public async Task<ActionResult<List<Clothing>>> GetByLocationAsync(string locationId)
         {
             return Ok(await _clothingService.GetByLocationAsync(locationId));
         }
 
         [HttpGet("filter")]
+        [Authorize(Policy = "ReadInventory")]
         public async Task<ActionResult<List<Clothing>>> GetByLocationAndSKU([FromQuery] string locationId, [FromQuery] string skuId)
         {
             return Ok(await _clothingService.GetByLocationAndSKUAsync(locationId, skuId));

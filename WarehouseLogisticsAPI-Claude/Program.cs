@@ -4,6 +4,7 @@ using WarehouseLogistics_Claude.Data;
 using WarehouseLogistics_Claude.Data.Interfaces;
 using WarehouseLogistics_Claude.Services;
 using WarehouseLogistics_Claude.Services.Interfaces;
+using WarehouseLogistics_Claude.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,13 +26,24 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.Audience = builder.Configuration["Auth0:Audience"];
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("ReadBOL",
+        policy => policy.RequireClaim("permissions", "read:bol"));
+    options.AddPolicy("CreateBOL",
+        policy => policy.RequireClaim("permissions", "create:bol"));
+    options.AddPolicy("ModifyBOL",
+        policy => policy.RequireClaim("permissions", "modify:bol"));
+    options.AddPolicy("ManageUsers",
+        policy => policy.RequireClaim("permissions", "manage:users"));
+});
 
 var dbPath = Path.Combine(builder.Environment.ContentRootPath, "..", "Sqlite 3 Implementation", "WarehouseData.db3");
 builder.Services.AddDbContext<LogisticsContext>(options => options.UseSqlite($"Data Source={dbPath}"));
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IBillOfLadingService, BillOfLadingService>();
+builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddControllers();
 
 var app = builder.Build();
