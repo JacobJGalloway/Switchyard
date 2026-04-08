@@ -42,7 +42,7 @@ function MultiSelectDropdown({
       {open && (
         <div style={{
           position: 'absolute', top: '100%', left: 0, zIndex: 10,
-          background: 'white', border: '1px solid #ccc', borderRadius: '4px',
+          background: 'var(--surface)', border: '1px solid var(--table-border)', borderRadius: '4px',
           padding: '0.4rem 0', minWidth: '160px', boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
         }}>
           {options.map(type => (
@@ -185,17 +185,17 @@ export default function InventoryViewer() {
               <thead>
                 <tr>
                   {['SKU', 'Unloaded Date', 'Projected', 'Location'].map(h => (
-                    <th key={h} style={{ border: '1px solid #ccc', padding: '0.4rem 0.8rem', textAlign: 'left' }}>{h}</th>
+                    <th key={h} style={{ border: '1px solid var(--table-border)', padding: '0.4rem 0.8rem', textAlign: 'left', background: 'var(--surface)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {items.map(item => (
                   <tr key={item.partitionKey}>
-                    <td style={{ border: '1px solid #ccc', padding: '0.4rem 0.8rem' }}>{item.skuMarker}</td>
-                    <td style={{ border: '1px solid #ccc', padding: '0.4rem 0.8rem' }}>{new Date(item.unloadedDate).toLocaleDateString()}</td>
-                    <td style={{ border: '1px solid #ccc', padding: '0.4rem 0.8rem' }}>{item.projected ? 'Yes' : 'No'}</td>
-                    <td style={{ border: '1px solid #ccc', padding: '0.4rem 0.8rem' }}>{item.locationId}</td>
+                    <td style={{ border: '1px solid var(--table-border)', padding: '0.4rem 0.8rem', background: 'var(--surface)' }}>{item.skuMarker}</td>
+                    <td style={{ border: '1px solid var(--table-border)', padding: '0.4rem 0.8rem', background: 'var(--surface)' }}>{new Date(item.unloadedDate).toLocaleDateString()}</td>
+                    <td style={{ border: '1px solid var(--table-border)', padding: '0.4rem 0.8rem', background: 'var(--surface)' }}>{item.projected ? 'Yes' : 'No'}</td>
+                    <td style={{ border: '1px solid var(--table-border)', padding: '0.4rem 0.8rem', background: 'var(--surface)' }}>{item.locationId}</td>
                   </tr>
                 ))}
               </tbody>

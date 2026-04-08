@@ -42,11 +42,11 @@
 
   &:hover {
     background: rgba(0, 0, 0, 0.08);
-
-    @media (prefers-color-scheme: dark) {
-      background: rgba(255, 255, 255, 0.1);
-    }
   }
+}
+
+:global([data-theme="dark"]) .profileButton:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .dropdown {
@@ -57,14 +57,14 @@
   border: 1px solid var(--border);
   border-radius: 6px;
   box-shadow: var(--shadow);
-  min-width: 130px;
+  min-width: 160px;
   overflow: hidden;
   z-index: 100;
+}
 
-  @media (prefers-color-scheme: dark) {
-    background: #2a292b;
-    border-color: #4a494c;
-  }
+:global([data-theme="dark"]) .dropdown {
+  background: #2a292b;
+  border-color: #4a494c;
 }
 
 .dropdownItem {
@@ -82,4 +82,10 @@
   &:hover {
     background: var(--accent-bg);
   }
+}
+
+.dropdownDivider {
+  margin: 0;
+  border: none;
+  border-top: 1px solid var(--border);
 }

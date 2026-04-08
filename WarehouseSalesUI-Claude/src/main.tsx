@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { Auth0Provider } from '@auth0/auth0-react'
+import { ThemeProvider } from './contexts/ThemeContext'
 import App from './App'
 import './index.css'
 
@@ -12,8 +13,9 @@ const redirectUri = import.meta.env.VITE_AUTH0_REDIRECT_URI ?? window.location.o
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
-      <Auth0Provider
+    <ThemeProvider>
+      <BrowserRouter>
+        <Auth0Provider
         domain={domain}
         clientId={clientId}
         authorizationParams={{
@@ -23,8 +25,9 @@ createRoot(document.getElementById('root')!).render(
         useRefreshTokens={true}
         cacheLocation="localstorage"
       >
-        <App />
-      </Auth0Provider>
-    </BrowserRouter>
+          <App />
+        </Auth0Provider>
+      </BrowserRouter>
+    </ThemeProvider>
   </StrictMode>
 )

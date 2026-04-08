@@ -12,12 +12,12 @@
   padding: 10px 14px;
   font-size: 15px;
   font-family: var(--sans);
-  color: var(--text);
+  color: var(--nav-text);
   text-decoration: none;
   transition: color 0.15s;
 
   &:hover {
-    color: var(--text);
+    color: var(--nav-text);
   }
 }
 

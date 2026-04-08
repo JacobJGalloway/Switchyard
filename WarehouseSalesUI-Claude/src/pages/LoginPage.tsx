@@ -1,6 +1,7 @@
 import { useAuth0 } from '@auth0/auth0-react'
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import fullLogoLight from '../assets/Digital Parts Full Logo Light Mode.svg'
 
 export default function LoginPage() {
   const { loginWithRedirect, isAuthenticated, isLoading } = useAuth0()
@@ -13,8 +14,8 @@ export default function LoginPage() {
   }, [isAuthenticated, isLoading, navigate])
 
   return (
-    <div>
-      <h1>Warehouse Sales</h1>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '3rem' }}>
+      <img src={fullLogoLight} alt="Digital Parts Logistics" style={{ width: '450px' }} />
       <button onClick={() => loginWithRedirect()}>Log In</button>
     </div>
   )
