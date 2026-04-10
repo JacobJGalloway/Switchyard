@@ -1,6 +1,7 @@
 using System.Threading.Channels;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using WarehouseLogistics_Claude.Data;
 using WarehouseLogistics_Claude.Data.Interfaces;
@@ -42,7 +43,7 @@ builder.Services.AddAuthorization(options =>
 });
 
 var dbPath = Path.Combine(builder.Environment.ContentRootPath, "..", "Sqlite 3 Implementation", "WarehouseData.db3");
-var readDbPath = Path.Combine(builder.Environment.ContentRootPath, "..", "Sqlite 3 Implementation", "WarehouseRead.db3");
+var readDbPath = Path.Combine(builder.Environment.ContentRootPath, "..", "Sqlite 3 Implementation", "WarehouseLogisticsRead.db3");
 
 var syncChannel = Channel.CreateUnbounded<SyncJob>();
 builder.Services.AddSingleton(syncChannel.Writer);
@@ -61,7 +62,55 @@ builder.Services.AddScoped<IBillOfLadingService, BillOfLadingService>();
 builder.Services.AddScoped<IUserManagementService, UserManagementService>();
 builder.Services.AddHostedService<LogisticsSyncWorker>();
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+
+var auth0Domain    = builder.Configuration["Auth0:Authority"]!.TrimEnd('/');
+var auth0Audience  = builder.Configuration["Auth0:Audience"]!;
+var scalarClientId = builder.Configuration["Auth0:ScalarClientId"]!;
+
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, _, _) =>
+    {
+        document.Components ??= new OpenApiComponents();
+        // v2.0: SecuritySchemes expects IDictionary<string, IOpenApiSecurityScheme>
+        document.Components.SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>
+        {
+            ["oauth2"] = new OpenApiSecurityScheme
+            {
+                Type  = SecuritySchemeType.OAuth2,
+                Flows = new OpenApiOAuthFlows
+                {
+                    AuthorizationCode = new OpenApiOAuthFlow
+                    {
+                        // audience baked in here — Auth0 requires it; not a standard OAuth2 param
+                        AuthorizationUrl = new Uri($"{auth0Domain}/authorize?audience={Uri.EscapeDataString(auth0Audience)}"),
+                        TokenUrl         = new Uri($"{auth0Domain}/oauth/token"),
+                        Scopes           = new Dictionary<string, string>
+                        {
+                            ["openid"]        = "OpenID Connect",
+                            ["profile"]       = "User profile",
+                            ["read:bol"]      = "Read bills of lading",
+                            ["create:bol"]    = "Create bills of lading",
+                            ["modify:bol"]    = "Process and replace BOL stops",
+                            ["manage:users"]  = "Manage Auth0 users",
+                        },
+                    }
+                }
+            }
+        };
+
+        // v2.0: Security (not SecurityRequirements); key is OpenApiSecuritySchemeReference
+        document.Security =
+        [
+            new OpenApiSecurityRequirement
+            {
+                [new OpenApiSecuritySchemeReference("oauth2", document)] = []
+            }
+        ];
+
+        return Task.CompletedTask;
+    });
+});
 
 var app = builder.Build();
 
@@ -82,6 +131,14 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapOpenApi();
-app.MapScalarApiReference();
+app.MapScalarApiReference(options =>
+{
+    options.AddOAuth2Authentication("oauth2", scheme =>
+    {
+        scheme.WithFlows(flows =>
+            flows.WithAuthorizationCode(flow =>
+                flow.WithClientId(scalarClientId)));
+    });
+});
 
 app.Run();

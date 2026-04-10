@@ -22,6 +22,11 @@ dist/
 .env.local
 .env.*.local
 
+# SQLite read replicas (generated on startup)
+*Read.db3
+*Read.db3-shm
+*Read.db3-wal
+
 # OS
 .DS_Store
 Thumbs.db
