@@ -11,7 +11,7 @@ A simplified retail logistics system demonstrating warehouse-to-store inventory 
 | `WarehouseSalesUI-Claude` | React/TypeScript client UI | 5173 |
 
 **Shared database:** `Sqlite 3 Implementation/WarehouseData.db3`
-**Read replica:** `Sqlite 3 Implementation/WarehouseRead.db3` (auto-created on startup)
+**Read replica:** `Sqlite 3 Implementation/WarehouseRead.db3` (auto-created on startup if not already persised)
 
 ## Running the System
 
@@ -34,9 +34,9 @@ dotnet test
 ## Architecture
 
 ### CQRS Read Replica
-Both APIs maintain a read replica (`WarehouseRead.db3`) synced asynchronously after every write:
+Both APIs maintain a read replica (`WarehouseRead{WarehouseInventory/WarehouseLogistics}.db3`) synced asynchronously after every write:
 - Write operations target `WarehouseData.db3`
-- Read operations target `WarehouseRead.db3` (all `AsNoTracking`)
+- Read operations target appropriate `WarehouseRead.db3` (all `AsNoTracking`)
 - `SaveChangesInterceptor` → `Channel<SyncJob>` → `BackgroundService` (full table resync per changed entity type)
 - `GET /api/Audit` on each API reports write vs read row counts with an `InSync` flag
 
@@ -97,15 +97,15 @@ Both APIs use Auth0 JWT bearer authentication. Permissions are claim-based:
 3. Add permissions to the API: `read:inventory`, `read:bol`, `create:bol`, `modify:bol`, `manage:users`
 4. For user management, create an M2M application and grant it the Auth0 Management API with scopes:
    `read:users`, `create:users`, `update:users`, `read:roles`, `create:role_members`
-5. Set credentials in `WarehouseLogisticsAPI-Claude/appsettings.Development.json` (gitignored):
+5. Set credentials in `{API Project Name}/appsettings.Development.json` (gitignored):
 
 ```json
 {
   "Auth0": {
     "Authority": "https://your-tenant.auth0.com/",
     "Audience": "your-api-audience",
-    "ManagementClientId": "your-m2m-client-id",
-    "ManagementClientSecret": "your-m2m-client-secret"
+    "ScalarClientId": "your-m2m-client-id",
+    "ScalarClientSecret": "your-m2m-client-secret"
   }
 }
 ```
