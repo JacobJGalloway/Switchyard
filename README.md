@@ -120,3 +120,4 @@ Both APIs use Auth0 JWT bearer authentication. Permissions are claim-based:
 - [ ] Migrate from `EnsureCreated` to EF Core migrations for controlled schema evolution
 - [ ] Extract User Management to a dedicated identity service when the data layer splits
 - [ ] Sales UI for system-registered non-employee users (no assigned location, no role) — separate main menu surfacing inventory by type, plus a checkout workflow that reduces inventory quantities via line entries on a customer-facing BOL variant
+- [ ] Scalar branding — company logo and name above the API title; currently blocked by Scalar's limited logo support in the .NET package

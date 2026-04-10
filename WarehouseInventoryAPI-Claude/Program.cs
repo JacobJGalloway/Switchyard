@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
+using System.Text.Json.Nodes;
 using WarehouseInventory_Claude.Data;
 using WarehouseInventory_Claude.Data.Interfaces;
 using WarehouseInventory_Claude.Data.Sync;
@@ -58,9 +59,14 @@ builder.Services.AddScoped<IToolService, ToolService>();
 builder.Services.AddHostedService<InventorySyncWorker>();
 builder.Services.AddControllers();
 
-var auth0Domain   = builder.Configuration["Auth0:Authority"]!.TrimEnd('/');
-var auth0Audience = builder.Configuration["Auth0:Audience"]!;
+var auth0Domain    = builder.Configuration["Auth0:Authority"]!.TrimEnd('/');
+var auth0Audience  = builder.Configuration["Auth0:Audience"]!;
 var scalarClientId = builder.Configuration["Auth0:ScalarClientId"]!;
+
+var logoPath    = Path.Combine(builder.Environment.ContentRootPath, "..", "WarehouseSalesUI-Claude", "src", "assets", "Digital Parts Full Logo Light Mode.svg");
+var logoDataUri = File.Exists(logoPath)
+    ? $"data:image/svg+xml;base64,{Convert.ToBase64String(File.ReadAllBytes(logoPath))}"
+    : string.Empty;
 
 builder.Services.AddOpenApi(options =>
 {
@@ -90,6 +96,14 @@ builder.Services.AddOpenApi(options =>
                 }
             }
         };
+
+        if (!string.IsNullOrEmpty(logoDataUri))
+        {
+            document.Info ??= new OpenApiInfo();
+            document.Info.Extensions ??= new Dictionary<string, IOpenApiExtension>();
+            document.Info.Extensions["x-logo"] = new JsonNodeExtension(
+                JsonNode.Parse($"{{\"url\":\"{logoDataUri}\",\"altText\":\"Digital Parts\"}}")!);
+        }
 
         // v2.0: Security (not SecurityRequirements); key is OpenApiSecuritySchemeReference
         document.Security =
@@ -125,12 +139,15 @@ app.MapControllers();
 app.MapOpenApi();
 app.MapScalarApiReference(options =>
 {
-    options.AddOAuth2Authentication("oauth2", scheme =>
-    {
-        scheme.WithFlows(flows =>
-            flows.WithAuthorizationCode(flow =>
-                flow.WithClientId(scalarClientId)));
-    });
+    options
+        .ForceLightMode()
+        .HideDarkModeToggle()
+        .AddOAuth2Authentication("oauth2", scheme =>
+        {
+            scheme.WithFlows(flows =>
+                flows.WithAuthorizationCode(flow =>
+                    flow.WithClientId(scalarClientId)));
+        });
 });
 
 app.Run();
