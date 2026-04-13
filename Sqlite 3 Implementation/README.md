@@ -2,6 +2,8 @@
 
 All query files are located in the `queries/` sub-folder. The target database file is `WarehouseData.db3`.
 
+> **Note:** You may notice `*Read.db3` files (e.g. `WarehouseInventoryRead.db3`) are greyed out in your editor — they are gitignored because each API creates and populates its own read replica on startup via `EnsureCreated()` and an initial sync job. Only `WarehouseData.db3` is tracked in source control.
+
 ## Setting Up from an Empty Database
 
 Run the queries in the two phases below, in order. Each phase must complete before starting the next.
