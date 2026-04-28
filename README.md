@@ -1,14 +1,14 @@
-# Warehouse Management System
+# Switchyard
 
-A simplified retail logistics system demonstrating warehouse-to-store inventory transfers. Three warehouses each supply three stores within same-day transfer range. Inventory is tracked per location; Bills of Lading move it between them. Authenticated via Auth0.
+Switchyard is an inventory, driver, and equipment tracking and management system which coordinates logistics operations across a network of warehouses and stores. Inventory is tracked per location; Bills of Lading govern movement between any combination of stops — from same-day local transfers to multi-stop OTR runs with partial loads. Authenticated via Auth0.
 
 ## Solution Structure
 
 | Project | Role | Port |
 |---|---|---|
-| `WarehouseInventoryAPI-Claude` | Inventory API — Clothing, PPE, Tools | 7000 |
-| `WarehouseLogisticsAPI-Claude` | Logistics API — Bills of Lading, Stores, Warehouses, Users | 7001 |
-| `WarehouseSalesUI-Claude` | React/TypeScript client UI | 5173 |
+| `Switchyard.InventoryAPI` | Inventory API — Clothing, PPE, Tools | 7000 |
+| `Switchyard.LogisticsAPI` | Logistics API — Bills of Lading, Stores, Warehouses, Users | 7001 |
+| `Switchyard.UI` | React/TypeScript client UI | 5173 |
 
 **Shared database:** `Sqlite 3 Implementation/WarehouseData.db3`
 **Read replica:** `Sqlite 3 Implementation/WarehouseRead.db3` (auto-created on startup if not already persisted)
@@ -17,11 +17,12 @@ A simplified retail logistics system demonstrating warehouse-to-store inventory 
 
 ```bash
 # APIs (run each in a separate terminal)
-dotnet run --project WarehouseInventoryAPI-Claude
-dotnet run --project WarehouseLogisticsAPI-Claude
+dotnet run --project Switchyard.InventoryAPI
+dotnet run --project Switchyard.LogisticsAPI
 
 # UI
-cd WarehouseSalesUI-Claude && npm run dev
+cd Switchyard.UI
+npm run dev
 
 # Tests
 dotnet test
@@ -114,12 +115,12 @@ Both APIs use Auth0 JWT bearer authentication. Permissions are claim-based:
 
 - [ ] Analytics endpoints — inventory over time by location (leverage `UnloadedDate` + projected flag)
 - [ ] Shipping figures per warehouse — aggregate from processed BOL line entries
-- [ ] Inventory withdrawal UI — `WarehouseSalesUI-Claude` currently shows Inventory Viewer; withdrawal flow not yet built
+- [ ] Inventory withdrawal UI — `Switchyard.UI` currently shows Inventory Viewer; withdrawal flow not yet built
 - [ ] BOL status history — audit trail of status transitions
 - [ ] Read replica health endpoint — expose sync lag / InSync status
 - [ ] Migrate from `EnsureCreated` to EF Core migrations for controlled schema evolution
 - [ ] Extract User Management to a dedicated identity service when the data layer splits
 - [ ] Sales UI for system-registered non-employee users (no assigned location, no role) — separate main menu surfacing inventory by type, plus a checkout workflow that reduces inventory quantities via line entries on a customer-facing BOL variant
-- [ ] Scalar branding — company logo and name above the API title; currently blocked by Scalar's limited logo support in the .NET package
+- [ ] Scalar branding — Switchyard logo and name above the API title; currently blocked by Scalar's limited logo support in the .NET package
 - [ ] Extract `Data/` folders into a dedicated class library project — starting with domain models to prevent hidden complexity under the data layer
 - [ ] Implement rolling refresh tokens for Auth0 sessions in place of fixed-expiry client secrets
