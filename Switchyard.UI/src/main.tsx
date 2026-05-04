@@ -6,6 +6,11 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import App from './App'
 import './index.css'
 
+const client = (import.meta.env.VITE_CLIENT as string | undefined)?.toLowerCase()
+if (client && client !== 'switchyard') {
+  document.documentElement.setAttribute('data-client', client)
+}
+
 const domain = import.meta.env.VITE_AUTH0_DOMAIN
 const clientId = import.meta.env.VITE_AUTH0_CLIENT_ID
 const audience = import.meta.env.VITE_AUTH0_AUDIENCE

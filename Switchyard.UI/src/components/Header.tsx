@@ -3,10 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth0 } from '@auth0/auth0-react'
 import { UserCircle } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext'
-import iconLight from '../assets/Digital Parts Icon Light Mode.svg'
-import iconDark from '../assets/Digital Parts Icon Dark Mode.svg'
-import nameLight from '../assets/Digital Parts Name Light Mode.svg'
-import nameDark from '../assets/Digital Parts Name Dark Mode.svg'
+import { resolveAsset, isClientOverride } from '../utils/assetResolver'
 import styles from './Header.module.css'
 
 export default function Header() {
@@ -25,19 +22,24 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  const nameOnly = resolveAsset('logo-name-only', theme)
+  const clientName = (import.meta.env.VITE_CLIENT_NAME as string | undefined) ?? 'Switchyard'
+
   return (
     <header className={styles.header}>
-      <Link to="/" className={styles.logo}>
-        <img
-          src={theme === 'dark' ? iconDark : iconLight}
-          alt="Digital Parts icon"
-          className={styles.icon}
-        />
-        <img
-          src={theme === 'dark' ? nameDark : nameLight}
-          alt="Digital Parts"
-          className={styles.name}
-        />
+      <Link to="/" className={styles.logoLink}>
+        {nameOnly
+          ? (
+            <>
+              <img src={resolveAsset('logo-detail', theme)!} alt="" className={styles.icon} />
+              <img src={nameOnly} alt={clientName} className={styles.name} />
+            </>
+          )
+          : <img src={resolveAsset('logo-full-name', theme)!} alt={clientName} className={styles.logo} />
+        }
+        {isClientOverride && (
+          <img src={resolveAsset('logo-powered-by', theme)!} alt="Powered by Switchyard" className={styles.poweredBy} />
+        )}
       </Link>
 
       <div className={styles.profileWrapper} ref={wrapperRef}>
