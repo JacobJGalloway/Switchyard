@@ -17,7 +17,7 @@ type DriverRepository interface {
 
 type HOSRepository interface {
 	CreateLimit(ctx context.Context, l *models.HOSLimit) error
-	GetLimitByState(ctx context.Context, stateCode string) (*models.HOSLimit, error)
+	GetLimitByStateAndCycle(ctx context.Context, stateCode string, cycleLabel string) (*models.HOSLimit, error)
 	CreateWindow(ctx context.Context, w *models.HOSWindow) error
 	GetWindowByDriver(ctx context.Context, driverID uuid.UUID) (*models.HOSWindow, error)
 	UpdateWindow(ctx context.Context, w *models.HOSWindow) error

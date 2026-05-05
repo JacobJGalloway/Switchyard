@@ -11,6 +11,9 @@ CREATE TABLE hos_limit (
     short_haul_radius_miles         INTEGER,           -- exemption radius in air miles (null = no exemption)
     adverse_weather_extension_hours NUMERIC,           -- additional driving hours permitted in adverse weather
     break_required_after_hours      NUMERIC NOT NULL DEFAULT 8, -- 30-min break trigger threshold
+    -- split sleeper berth provision pauses the daily_period_hours clock
+    sleeper_split_allowed           BOOLEAN NOT NULL DEFAULT false,
+    sleeper_split_options           TEXT,                      -- e.g. '7/3,8/2' (null if not allowed)
     -- '60/7' or '70/8' — states that allow both cycles have one row per cycle
     cycle_label                     TEXT    NOT NULL,
     effective_from                  DATE    NOT NULL,
