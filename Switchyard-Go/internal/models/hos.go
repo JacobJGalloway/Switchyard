@@ -6,15 +6,25 @@ import (
 	"github.com/google/uuid"
 )
 
-// HOSLimit stores state-level daily and weekly hour caps. New states are added
-// by inserting rows — no code change required (see ARCHITECTURE.md §4.3).
+// HOSLimit stores state-level HOS rules. New states are added by inserting rows —
+// no code change required (see ARCHITECTURE.md §4.3).
+// DailyDrivingLimitHours and DailyPeriodHours are distinct: a driver may hit
+// the driving cap before the on-duty window closes, or vice versa.
 type HOSLimit struct {
-	ID               uuid.UUID `json:"id"`
-	StateCode        string    `json:"state_code"`
-	DailyLimitHours  float64   `json:"daily_limit_hours"`
-	WeeklyLimitHours float64   `json:"weekly_limit_hours"`
-	EffectiveFrom    time.Time `json:"effective_from"`
-	Notes            *string   `json:"notes,omitempty"`
+	ID                            uuid.UUID `json:"id"`
+	StateCode                     string    `json:"state_code"`
+	DailyDrivingLimitHours        float64   `json:"daily_driving_limit_hours"`
+	DailyPeriodHours              float64   `json:"daily_period_hours"`
+	RestPeriodHours               float64   `json:"rest_period_hours"`
+	WeeklyLimitHours              float64   `json:"weekly_limit_hours"`
+	WeeklyPeriodDays              int       `json:"weekly_period_days"`
+	WeeklyResetHours              float64   `json:"weekly_reset_hours"`
+	SleeperCabMinHours            *float64  `json:"sleeper_cab_min_hours,omitempty"`
+	ShortHaulRadiusMiles          *int      `json:"short_haul_radius_miles,omitempty"`
+	AdverseWeatherExtensionHours  *float64  `json:"adverse_weather_extension_hours,omitempty"`
+	BreakRequiredAfterHours       float64   `json:"break_required_after_hours"`
+	EffectiveFrom                 time.Time `json:"effective_from"`
+	Notes                         *string   `json:"notes,omitempty"`
 }
 
 // HOSWindow tracks accumulated hours for one driver across a run window.
