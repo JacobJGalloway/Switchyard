@@ -25,7 +25,15 @@ func main() {
 
 	// TODO: initialize DB connection pool (pgx)
 	// TODO: run migrations (golang-migrate)
-	// TODO: wire repositories → services → handlers
+	// TODO: wire repositories → services → event handler → HTTP handlers
+	//
+	// Wiring order:
+	//   1. pgx pool from DATABASE_URL
+	//   2. concrete repository implementations
+	//   3. concrete service implementations (hos, whiteboard, notification)
+	//   4. events.NewHandler(cfg, hos, whiteboard, notification, inv, log)
+	//   5. r.Post("/api/events", eventHandler.Handle)
+	//   6. register remaining API handlers from /internal/handlers/
 
 	port := viper.GetString("PORT")
 	log.Printf("starting switchyard-go on :%s", port)
