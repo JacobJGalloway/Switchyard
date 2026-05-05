@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS hos_window;

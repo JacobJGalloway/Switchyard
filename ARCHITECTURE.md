@@ -840,24 +840,6 @@ Depends on operating cost tracking being in place first.
   only addition required
 - Scoped out of 1.1 to keep sprint velocity focused on core dispatch workflow
 
-### Theming and White-Label Client Overrides
-- Add a "Theming" section which covers the default base color themes ("Industrial Cool" light
-  and dark) and either instructions on how to provide the client configuration variables for
-  theme overrides, or a link to the section README.md on what those instructions are. Will
-  require an update to the section README.md if the link workflow is implemented.
-- Client override scheme: `{client_dns_name}.switchyard.com` with SCSS-configurable color
-  variables. Default operational domain is `@switchyard.com`.
-
-### Switchyard Brand Assets
-- Complete asset creation for the Switchyard logo and naming by this point. This work can be
-  started in 1.1, but only as an additional feature if time allows. This includes:
-  - Logo only
-  - Name only
-  - Logo and name together
-  - "Powered by Switchyard" lockup
-- All assets are required in both Light and Dark mode variants.
-- Two-tone treatment on the "S" mark. Two modes only — no additional palette variants.
-
 ### README Refresh
 - Rewrite the main `README.md` to reflect Switchyard naming and current 1.1 scope
 - Add a `Future Features` section aligned to this document's v1.2 candidate list

@@ -53,3 +53,43 @@ dotnet test --filter "FullyQualifiedName~TestName"     # run a single test
 - `Services/Interfaces/IBillOfLadingService.cs` — service interface
 - `Controllers/BillOfLadingController.cs` — BOL creation endpoint; writes a formatted `.txt` file to `~/Downloads`
 - `Tests/` — empty; tests not yet written
+
+---
+
+## Switchyard Go Architecture (v1.1)
+
+Read `ARCHITECTURE.md` before writing any code for the Go backend.
+
+**Go project root:** `Switchyard-Go/`
+**Module path:** `github.com/JacobJGalloway/switchyard-go`
+
+### Build & Run (Go)
+
+```bash
+cd Switchyard-Go
+go mod tidy              # resolve dependencies and generate go.sum (required first run)
+go build ./...           # build all packages
+go run ./cmd/main.go     # run the Go backend
+go test ./...            # run all tests
+```
+
+### Priority reading order before touching Go code
+1. Section 2 — CUD authority boundary. PlanBOL entities are Go's domain. Committed BOL stops are .NET's domain. These never cross.
+2. Section 3 — The event handler is the single Go entry point. The M2M token lives here and nowhere else.
+3. Section 4 — Business rules are hard constraints. Empty truck rule, 4-hour dead-head window, state-level HOS limits are enforced at the service layer. They are rejections, not warnings.
+4. Section 5 — Read the full Kanban board design before touching whiteboard code. Column transitions are driven by assignment state.
+5. Section 13 — The integrations adapter is the only place that calls the .NET system. No exceptions.
+
+### Go implementation order
+1. ✅ go.mod and project scaffold
+2. ✅ Domain models `/internal/models`
+3. ✅ Repository interfaces `/internal/repository/interfaces.go`
+4. Migration files `/internal/migrations`
+5. HOSLimit seed data
+6. Integration adapters `/internal/integrations`
+7. Event handler `/internal/events`
+8. Service layer — route_planner and hos_service first
+9. Whiteboard service
+10. Notification service
+11. Handlers `/internal/handlers`
+12. Web templates `/web/templates`
