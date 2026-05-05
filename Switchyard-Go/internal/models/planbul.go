@@ -36,12 +36,15 @@ type PlanBOLRecord struct {
 }
 
 type PlanBOLStop struct {
-	ID           uuid.UUID  `json:"id"`
-	PlanBOLID    uuid.UUID  `json:"plan_bol_id"`
-	Sequence     int        `json:"sequence"`
-	LocationID   string     `json:"location_id"`
-	StopType     StopType   `json:"stop_type"`
-	IsProcessed  bool       `json:"is_processed"`
-	ProcessedAt  *time.Time `json:"processed_at,omitempty"`
-	DriverLogRef *string    `json:"driver_log_ref,omitempty"`
+	ID            uuid.UUID      `json:"id"`
+	PlanBOLID     uuid.UUID      `json:"plan_bol_id"`
+	Sequence      int            `json:"sequence"`
+	LocationID    string         `json:"location_id"`
+	StopType      StopType       `json:"stop_type"`
+	// DeliveryItems holds items to load (warehouse stops) or deliver (store stops).
+	// Nil for return_depot stops.
+	DeliveryItems map[string]int `json:"delivery_items,omitempty"`
+	IsProcessed   bool           `json:"is_processed"`
+	ProcessedAt   *time.Time     `json:"processed_at,omitempty"`
+	DriverLogRef  *string        `json:"driver_log_ref,omitempty"`
 }
