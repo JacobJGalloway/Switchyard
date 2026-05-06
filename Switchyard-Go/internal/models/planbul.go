@@ -17,10 +17,12 @@ const (
 type PlanBOLStatus string
 
 const (
-	PlanBOLStatusDraft     PlanBOLStatus = "draft"
-	PlanBOLStatusValidated PlanBOLStatus = "validated"
-	PlanBOLStatusSubmitted PlanBOLStatus = "submitted"
-	PlanBOLStatusFulfilled PlanBOLStatus = "fulfilled"
+	PlanBOLStatusDraft        PlanBOLStatus = "draft"
+	PlanBOLStatusPlanProgress PlanBOLStatus = "plan-progress"
+	PlanBOLStatusLoading      PlanBOLStatus = "loading"
+	PlanBOLStatusValidated    PlanBOLStatus = "validated"
+	PlanBOLStatusSubmitted    PlanBOLStatus = "submitted"
+	PlanBOLStatusFulfilled    PlanBOLStatus = "fulfilled"
 )
 
 // PlanBOLRecord is the Go backend's planning-phase representation of a BOL.
@@ -31,8 +33,12 @@ type PlanBOLRecord struct {
 	OriginatingWhID string        `json:"originating_wh_id"`
 	Status          PlanBOLStatus `json:"status"`
 	CreatedAt       time.Time     `json:"created_at"`
-	SubmittedAt     *time.Time    `json:"submitted_at,omitempty"`
-	FulfilledAt     *time.Time    `json:"fulfilled_at,omitempty"`
+	SubmittedAt            *time.Time `json:"submitted_at,omitempty"`
+	FulfilledAt            *time.Time `json:"fulfilled_at,omitempty"`
+	// SubmittedTransactionID is the .NET Logistics API transaction ID assigned
+	// when the plan is committed via POST /api/BillOfLading. Required for
+	// ProcessStop calls on subsequent driver stop logs.
+	SubmittedTransactionID *string    `json:"submitted_transaction_id,omitempty"`
 }
 
 type PlanBOLStop struct {

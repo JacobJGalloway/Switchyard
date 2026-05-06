@@ -39,8 +39,11 @@ type EquipmentRepository interface {
 type PlanBOLRepository interface {
 	Create(ctx context.Context, p *models.PlanBOLRecord) error
 	GetByID(ctx context.Context, id uuid.UUID) (*models.PlanBOLRecord, error)
+	GetByStatus(ctx context.Context, status models.PlanBOLStatus) ([]*models.PlanBOLRecord, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status models.PlanBOLStatus) error
+	SetSubmittedTransactionID(ctx context.Context, id uuid.UUID, txID string) error
 	CreateStop(ctx context.Context, s *models.PlanBOLStop) error
+	GetStopByID(ctx context.Context, stopID uuid.UUID) (*models.PlanBOLStop, error)
 	GetStops(ctx context.Context, planBOLID uuid.UUID) ([]*models.PlanBOLStop, error)
 	MarkStopProcessed(ctx context.Context, stopID uuid.UUID, processedAt time.Time) error
 	CreateSnapshot(ctx context.Context, s *models.TruckInventorySnapshot) error
@@ -51,6 +54,12 @@ type AssignmentRepository interface {
 	Create(ctx context.Context, a *models.DriverBOLAssignment) error
 	GetByID(ctx context.Context, id uuid.UUID) (*models.DriverBOLAssignment, error)
 	GetByPlanBOL(ctx context.Context, planBOLID uuid.UUID) (*models.DriverBOLAssignment, error)
+	// GetAllActive returns all assignments where deadhead_confirmed_at IS NULL.
+	// This covers Pending Dispatch, In Transit, and Delivered board states.
+	GetAllActive(ctx context.Context) ([]*models.DriverBOLAssignment, error)
+	// GetActiveByDriver returns the most recent assignment for a driver where
+	// deadhead_confirmed_at IS NULL. Returns nil, nil when the driver has no active run.
+	GetActiveByDriver(ctx context.Context, driverID uuid.UUID) (*models.DriverBOLAssignment, error)
 	MarkDeparted(ctx context.Context, id uuid.UUID, departedAt time.Time) error
 	MarkFulfilled(ctx context.Context, id uuid.UUID, fulfilledAt time.Time) error
 	ConfirmDeadhead(ctx context.Context, id uuid.UUID, confirmedAt time.Time) error

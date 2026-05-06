@@ -1,12 +1,229 @@
+{{define "driver_runsheet"}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Run Sheet — Switchyard</title>
-    <link rel="stylesheet" href="/static/runsheet.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Run Sheet{{with .Driver}} — {{.Name}}{{end}} — Switchyard</title>
+  <style>
+    :root {
+      --bg:       #f4f6fb;
+      --card:     #ffffff;
+      --border:   #dde2ed;
+      --text:     #1a1d2e;
+      --muted:    #6b7491;
+      --accent:   #4e7cbf;
+      --acc-lt:   #eaf1fb;
+      --ok:       #4caf7d;
+      --ok-bg:    #edfaf4;
+      --warn:     #f5a623;
+      --danger:   #e05c5c;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 14px;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    /* Header */
+    .pg-header { margin-bottom: 18px; }
+    .brand     { font-size: 12px; font-weight: 700; letter-spacing: .1em; color: var(--accent); margin-bottom: 4px; }
+    .drv-name  { font-size: 22px; font-weight: 700; line-height: 1.2; }
+    .drv-meta  { font-size: 13px; color: var(--muted); margin-top: 3px; }
+    .inactive  {
+      display: inline-block; font-size: 11px;
+      padding: 1px 8px; border-radius: 10px;
+      background: #eee; color: var(--muted); margin-left: 8px;
+    }
+
+    /* Card */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+    .card-hd {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 10px;
+    }
+
+    /* Key-value rows */
+    .kv       { display: flex; gap: 8px; margin-bottom: 4px; font-size: 13px; }
+    .kv-l     { color: var(--muted); min-width: 96px; flex-shrink: 0; }
+    .kv-v     { font-weight: 500; }
+
+    /* HOS numbers */
+    .hos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .hos-cell { }
+    .hos-val  { font-size: 22px; font-weight: 700; line-height: 1; }
+    .hos-lbl  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .hos-notice { font-size: 12px; margin-top: 8px; }
+    .hos-notice.warn   { color: var(--warn); }
+    .hos-notice.danger { color: var(--danger); font-weight: 600; }
+
+    /* Stop list */
+    .stop-list { display: flex; flex-direction: column; }
+    .stop-row  { display: flex; gap: 0; }
+    .stop-line {
+      display: flex; flex-direction: column;
+      align-items: center; width: 24px; flex-shrink: 0;
+    }
+    .dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      border: 2px solid var(--border); background: var(--card);
+      flex-shrink: 0; margin-top: 13px;
+    }
+    .dot.done    { background: var(--ok);     border-color: var(--ok); }
+    .dot.current { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 3px var(--acc-lt); }
+    .line { width: 2px; flex: 1; background: var(--border); margin: 2px 0; }
+    .line.done { background: var(--ok); }
+    .stop-row:last-child .line { display: none; }
+
+    .stop-body { flex: 1; padding: 10px 0 14px 10px; }
+    .stop-top  { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+    .seq       { font-size: 11px; color: var(--muted); }
+    .loc       { font-size: 14px; font-weight: 600; }
+    .type-pill {
+      font-size: 10px; font-weight: 700;
+      padding: 1px 7px; border-radius: 10px;
+      text-transform: uppercase;
+    }
+    .tp-warehouse    { background: var(--acc-lt); color: var(--accent); }
+    .tp-store        { background: var(--ok-bg);  color: var(--ok); }
+    .tp-return_depot { background: #f0f0f0;        color: var(--muted); }
+    .stop-meta { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    .stop-meta.done { color: var(--ok); }
+    .items     { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+    .pill      {
+      font-size: 11px; padding: 2px 8px; border-radius: 10px;
+      background: var(--bg); border: 1px solid var(--border); color: var(--muted);
+    }
+
+    /* No run */
+    .no-run { text-align: center; padding: 36px 16px; color: var(--muted); }
+    .no-run-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+
+    /* Footer */
+    .footer {
+      text-align: center; font-size: 11px; color: var(--muted);
+      margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--border);
+    }
+  </style>
 </head>
 <body>
-    <!-- Driver Run Sheet — stop list + live inventory state template stub -->
+
+{{with .Driver}}
+<div class="pg-header">
+  <div class="brand">SWITCHYARD</div>
+  <div class="drv-name">
+    {{.Name}}{{if not .IsActive}}<span class="inactive">Inactive</span>{{end}}
+  </div>
+  <div class="drv-meta">{{.LicenseState}} &bull; Home: {{.HomeWarehouseID}}</div>
+</div>
+{{end}}
+
+{{/* ── HOS ── */}}
+{{with .HOSWindow}}
+<div class="card">
+  <div class="card-hd">Hours of Service</div>
+  <div class="hos-grid">
+    <div class="hos-cell">
+      <div class="hos-val">{{printf "%.1f" .DailyHoursUsed}}</div>
+      <div class="hos-lbl">Hours today</div>
+    </div>
+    <div class="hos-cell">
+      <div class="hos-val">{{printf "%.1f" .WeeklyHoursUsed}}</div>
+      <div class="hos-lbl">Hours this week</div>
+    </div>
+  </div>
+  {{if not .Break30Taken}}
+  <div class="hos-notice warn">&#9888; 30-min break not yet taken this shift</div>
+  {{end}}
+  {{if .MandatedStopAt}}
+  <div class="hos-notice danger">
+    &#9646; Mandated stop since {{.MandatedStopAt.Format "15:04"}}
+    {{with .ELDStopRef}}&bull; ELD: {{.}}{{end}}
+  </div>
+  {{end}}
+</div>
+{{end}}
+
+{{/* ── Assignment ── */}}
+{{with .Assignment}}
+<div class="card">
+  <div class="card-hd">Active Assignment</div>
+  <div class="kv"><span class="kv-l">Assignment</span><span class="kv-v">{{printf "%.8s" .ID}}&hellip;</span></div>
+  <div class="kv"><span class="kv-l">Equipment</span><span class="kv-v">{{printf "%.8s" .EquipmentID}}&hellip;</span></div>
+  {{with .DepartedAt}}<div class="kv"><span class="kv-l">Departed</span><span class="kv-v">{{.Format "Jan 2 15:04"}}</span></div>{{end}}
+  {{with .FulfilledAt}}<div class="kv"><span class="kv-l">Fulfilled</span><span class="kv-v">{{.Format "Jan 2 15:04"}}</span></div>{{end}}
+</div>
+{{end}}
+{{with .PlanBOL}}
+{{if $.Assignment}}
+<div class="card">
+  <div class="card-hd">Plan BOL</div>
+  <div class="kv"><span class="kv-l">BOL ID</span><span class="kv-v">{{printf "%.8s" .ID}}&hellip;</span></div>
+  <div class="kv"><span class="kv-l">Status</span><span class="kv-v">{{.Status}}</span></div>
+  <div class="kv"><span class="kv-l">Origin WH</span><span class="kv-v">{{.OriginatingWhID}}</span></div>
+</div>
+{{end}}
+{{end}}
+
+{{/* ── Stop sequence ── */}}
+{{if .Stops}}
+<div class="card">
+  <div class="card-hd">Stop Sequence &mdash; {{len .Stops}} stops</div>
+  <div class="stop-list">
+    {{range .Stops}}
+    <div class="stop-row">
+      <div class="stop-line">
+        <div class="dot{{if .IsProcessed}} done{{end}}"></div>
+        <div class="line{{if .IsProcessed}} done{{end}}"></div>
+      </div>
+      <div class="stop-body">
+        <div class="stop-top">
+          <span class="seq">#{{.Sequence}}</span>
+          <span class="loc">{{.LocationID}}</span>
+          <span class="type-pill tp-{{.StopType}}">{{.StopType}}</span>
+        </div>
+        {{if .IsProcessed}}
+        <div class="stop-meta done">
+          &#10003; Completed{{with .ProcessedAt}} {{.Format "Jan 2 15:04"}}{{end}}{{with .DriverLogRef}} &bull; Log: {{.}}{{end}}
+        </div>
+        {{else}}
+        <div class="stop-meta">Pending</div>
+        {{end}}
+        {{if .DeliveryItems}}
+        <div class="items">
+          {{range $sku, $qty := .DeliveryItems}}
+          <span class="pill">{{$sku}} &times; {{$qty}}</span>
+          {{end}}
+        </div>
+        {{end}}
+      </div>
+    </div>
+    {{end}}
+  </div>
+</div>
+{{else}}
+<div class="card">
+  <div class="no-run">
+    <div class="no-run-title">No active run</div>
+    <div>Waiting for assignment</div>
+  </div>
+</div>
+{{end}}
+
+<div class="footer">Powered by Switchyard</div>
+
 </body>
 </html>
+{{end}}

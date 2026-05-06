@@ -95,9 +95,10 @@ Go backend owns CUD for:
   Auth0 users
 ```
 
-The seam between systems is the `submit` action on a validated PlanBOLRecord. At that moment
-the Go backend calls `POST /BillOfLading` on the Switchyard (.NET) Logistics API, hands off
-authority, and the PlanBOL entities become read-only archived records.
+The seam between systems is the `commit` action on a plan-progress PlanBOLRecord. At that
+moment the Go backend calls `POST /BillOfLading` on the Switchyard (.NET) Logistics API, hands
+off authority, and the PlanBOL entities become read-only archived records. The `commit` action
+is restricted to dispatcher, route planner, and supervisor roles.
 
 ---
 
@@ -227,70 +228,113 @@ The whiteboard is a real-time Kanban board served at `GET /` (HTML) and `GET /ap
 ### Column Structure
 
 ```
-┌──────────────┬──────────────┬─────────────────────────────┬──────────────┬──────────────┬──────────────┬──────────────┐
-│   AVAILABLE  │   PENDING    │         IN TRANSIT           │  DELIVERED   │ HOS LIMITED  │ MAINTENANCE  │  BREAKDOWN   │
-│              │  DISPATCH    │                              │              │              │              │              │
-│  BOL card    │  BOL card    │  Driver card (primary)       │  Driver card │  Driver card │  Equipment   │  Equipment   │
-│  (loaded,    │  (skinny —   │  └─ BOL sub-card             │  + countdown │  (at/near    │  card +      │  card +      │
-│  ready for   │  needs to    │                              │  timer for   │  weekly      │  timeframe   │  location    │
-│  assignment) │  move now)   │  ┌─────────┬──────────────┐  │  dead-head   │  HOS limit)  │  estimate    │  indicator   │
-│              │              │  │IN DELIVERY│MANDATED STOP│  │  search      │              │              │              │
-│              │              │  │          │+ ELD time   │  │              │              │              │              │
-│              │              │  └─────────┴──────────────┘  │              │              │              │              │
-└──────────────┴──────────────┴─────────────────────────────┴──────────────┴──────────────┴──────────────┴──────────────┘
+◄─────────────── Workflow pipeline ───────────────────────────────────────────────────────► ◄── Resource pools ──►
+
+┌─────────┬─────────┬──────────────┬──────────────────────────────┬───────────┬──────────────────┬──────────────┐
+│  DRAFT  │ PENDING │   LOADING /  │         IN DELIVERY           │ DELIVERED │    AVAILABLE     │ MAINTENANCE  │
+│         │         │    READY     │                               │           │                  │              │
+├─────────┼─────────┼──────────────┼──────────────────────────────┼───────────┼──────────────────┼──────────────┤
+│ BOL     │ BOL     │ BOL card     │ Driver card (primary)         │ Driver    │ Driver card      │ Equipment    │
+│ card    │ card    │ card face    │ ┌──────────┬────────┬───────┐ │ card      │ Toggle:          │ card         │
+│         │         │ shows phase  │ │IN TRANSIT│MANDATED│BREAK- │ │ + count-  │ Available Now    │              │
+│         │         │ (loading /   │ │          │ STOP   │ DOWN  │ │ down      │ / Resting        │              │
+│         │         │  ready) and  │ │(expanded)│(count) │(count)│ │ timer     │                  │              │
+│         │         │ age if long  │ └──────────┴────────┴───────┘ │           │                  │              │
+└─────────┴─────────┴──────────────┴──────────────────────────────┴───────────┴──────────────────┴──────────────┘
 ```
+
+The board has two logical zones:
+- **Workflow pipeline** (left): a BOL enters at Draft and exits at Delivered. Reads left-to-right.
+- **Resource pools** (right): Available shows the driver pool the dispatcher pulls from to feed the pipeline.
+  Maintenance shows equipment temporarily out of rotation. Neither column is a workflow step.
+
+**Status → Column mapping:**
+
+| `PlanBOLStatus` value | Column |
+|---|---|
+| `draft` | Draft |
+| `plan-progress` | Pending |
+| `loading` | Loading / Ready |
+| `validated` | Loading / Ready |
+| `submitted` | In Delivery |
+| `fulfilled` | Delivered |
 
 ### Column Definitions
 
-**AVAILABLE**
+**DRAFT**
 - Primary card: BOL
-- State: BOL created, inventory loaded onto trailer, no driver/equipment assigned yet
-- Dispatcher action: assign driver and equipment to move card to Pending Dispatch
+- State: BOL created from incoming invoice, no planning begun
+- Actor: dispatcher or route planner claims the BOL to begin planning
+- Transition: claim → status `plan-progress` → card moves to Pending
 
-**PENDING DISPATCH** *(skinny column — urgent)*
+**PENDING** *(human-spinner — signals active planning work in progress)*
 - Primary card: BOL
-- State: driver and equipment assigned, BOL has not yet departed
-- Visual treatment: narrow column width signals urgency — this BOL needs to roll
-- Dispatcher action: confirm departure to move card to In Transit
+- State: dispatcher or route planner has claimed this BOL, route planning in progress
+- Prevents double-assignment of planning effort — other planners see it is taken
+- Actor: dispatcher or route planner commits the plan
+- Transition: commit → `.NET CreateBOL` called → status `loading` → card moves to Loading
+- Permission: `create:bol` — dispatcher, route planner, supervisor roles only
 
-**IN TRANSIT**
+**LOADING**
+- Primary card: BOL
+- State: route plan committed, `.NET CreateBOL` called. Originating warehouse dock is
+  physically loading the trailer against the committed BOL.
+- Actor: dock supervisor or dock lead marks trailer loaded
+- Transition: mark-loaded → status `validated` → card moves to Ready
+
+**READY**
+- Primary card: BOL
+- State: trailer loaded and confirmed. Awaiting driver and equipment assignment.
+- Long-waiting cards receive a visual age indicator (threshold configurable)
+- Dispatcher action: assign driver + equipment → assignment created → card moves to In Delivery
+  on departure (status `submitted`)
+
+**IN DELIVERY**
 - Primary card: Driver
 - Sub-card: BOL (beneath driver card)
-- Two sub-columns:
-  - **In Delivery** — driver actively moving between stops
-  - **Mandated Stop** — HOS or legally required rest stop. Displays ELD timestamp
-    if accessible; dispatcher manual entry if not. Dead-head timer paused.
-- Driver card displays: driver name, equipment ID, current stop, HOS status indicator
-  (green / yellow approaching / red at limit)
+- Three sub-sections within the column. In Transit is expanded by default.
+  Mandated Stop and Breakdown are collapsed — a count badge in the section header
+  indicates entries. Click to expand.
+  - **In Transit** *(expanded by default)* — driver actively moving between stops
+  - **Mandated Stop** *(collapsed, count shown)* — HOS or legally required rest. Displays
+    ELD timestamp if accessible; dispatcher manual entry if not. Dead-head timer paused.
+  - **Breakdown** *(collapsed, count shown)* — roadside equipment failure with load still
+    attached. Triggers immediate email notification to dispatcher. Card is urgent-styled.
+- Driver card displays: driver name, equipment ID, current stop, HOS status dot
+  (green / yellow approaching limit / red at limit)
 
 **DELIVERED**
 - Primary card: Driver
 - State: all BOL stops confirmed, driver away from originating warehouse
-- Countdown timer displayed on card — dispatcher window to arrange dead-head return run
+- Countdown timer on card — dispatcher window to arrange dead-head return run
+- Timer starts at `fulfilled_at`, duration set by `DEADHEAD_SEARCH_WINDOW_HOURS`
 - Timer expiry fires email notification to dispatcher
-- Dispatcher action: confirm dead-head pairing to clear card from board
+- Dispatcher action: confirm dead-head pairing → card clears from board
 
-**HOS LIMITED**
+**AVAILABLE**
 - Primary card: Driver
-- State: driver has reached daily or weekly HOS limit, unavailable for new runs
-- Informational column — dispatcher knows not to assign this driver
-- Card clears automatically when HOS window resets (configurable per state)
+- Scope: all drivers not currently on an active run (no active assignment)
+- **Default view — Available Now:** drivers who are not in a mandated rest period,
+  color-coded by HOS headroom:
+  - Green — ample hours remaining, fully assignable
+  - Yellow — approaching daily or weekly limit, assignable with constraint
+- **Toggle view — Resting:** drivers in a mandated rest period, with countdown to return:
+  - Countdown = `max(MandatedStopAt + RestPeriodHours, MandatedStopAt + WeeklyResetHours)`
+    where weekly reset applies only when `WeeklyHoursUsed >= WeeklyLimitHours`
+  - Taking the higher of the two ensures the driver exits rest fully legal, not just daily-legal
+  - If weekly reset is taken, card notes "Weekly reset — resets both clocks"
+  - Card clears from Resting view and returns to Available Now automatically when rest ends
+- Toggle control: icon button in the column header, `aria-label` updated on each toggle
+  (e.g. "Show resting drivers" ↔ "Show available drivers"). Vanilla JS toggles a CSS class
+  on the column body to swap which list is visible. No framework dependency.
 
-**MAINTENANCE** *(equipment columns, right side of board)*
+**MAINTENANCE** *(equipment only, right side of board)*
 - Primary card: Equipment (truck or tractor)
-- State: scheduled planned maintenance, equipment temporarily unavailable
-- Card displays: equipment ID, maintenance description, estimated return timeframe
-- Planned maintenance only — unplanned goes to Breakdown
-
-**BREAKDOWN**
-- Primary card: Equipment
-- Two scenarios on one card, distinguished by location indicator:
-  - **Depot breakdown** — equipment made it back to originating warehouse before failure
-  - **Roadside breakdown** — equipment failed in the field, driver and load still attached
-    (urgent — dispatcher must arrange rescue dispatch)
-- Roadside breakdown with load triggers immediate email notification to dispatcher
-- Card displays: equipment ID, driver reference (if load attached), breakdown location,
-  reported timestamp
+- State: equipment in scheduled or post-breakdown maintenance, temporarily unavailable
+- Card displays: equipment ID, type, maintenance description, estimated return timeframe
+- Planned maintenance: reported directly, equipment moves here immediately
+- Post-breakdown: equipment moves here after the BreakdownRecord is resolved and
+  a MaintenanceRecord is created for the repair work
 
 ### Driver-BOL-Equipment Assignment Record
 
@@ -479,7 +523,7 @@ deadhead_confirmed_at TIMESTAMPTZ
 id                UUID        PRIMARY KEY
 driver_id         UUID        NOT NULL REFERENCES driver(id)
 originating_wh_id TEXT        NOT NULL
-status            TEXT        NOT NULL  -- draft | validated | submitted | fulfilled
+status            TEXT        NOT NULL  -- draft | plan-progress | loading | validated | submitted | fulfilled
 created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 submitted_at      TIMESTAMPTZ
 fulfilled_at      TIMESTAMPTZ
@@ -551,11 +595,14 @@ POST   /api/events                       Receive workflow event, route to servic
 
 ### PlanBOL
 ```
-POST   /api/plan-bol                     Create and begin constraint resolution
-GET    /api/plan-bol/:id                 Get PlanBOLRecord with full stop sequence
-POST   /api/plan-bol/:id/validate        Run full constraint pass, return violations
-POST   /api/plan-bol/:id/submit          Submit validated plan to Switchyard (.NET)
-GET    /api/plan-bol/:id/truck-state     Truck inventory state snapshot at each stop
+POST   /api/plan-bol                        Create BOL from invoice (status: draft)
+GET    /api/plan-bol/:id                    Get PlanBOLRecord with full stop sequence
+POST   /api/plan-bol/:id/begin-planning     Claim for route planning (draft → plan-progress)
+POST   /api/plan-bol/:id/validate           Run constraint solver pass, return violations
+POST   /api/plan-bol/:id/commit             Commit plan, call .NET CreateBOL             [dispatcher, planner, supervisor]
+                                            (plan-progress → loading)
+POST   /api/plan-bol/:id/mark-loaded        Dock confirms trailer loaded (loading → validated)
+GET    /api/plan-bol/:id/truck-state        Truck inventory state snapshot at each stop
 ```
 
 ### Driver
@@ -678,25 +725,30 @@ Frontend (shared across all backend islands):
 ```bash
 # Required
 DATABASE_URL=postgres://user:pass@host:5432/switchyard_go
-LOGISTICS_API_URL=https://localhost:7001
-INVENTORY_API_URL=https://localhost:7000
-AUTH0_AUTHORITY=https://your-tenant.auth0.com/
-AUTH0_AUDIENCE=your-api-audience
+LOGISTICS_BASE_URL=https://localhost:7001
+INVENTORY_BASE_URL=https://localhost:7000
 
-# Invoice output — swap value only, no code change needed
-INVOICE_OUTPUT_PATH=./output/invoices
+# Auth0 M2M (event handler holds the sole token — see §3)
+AUTH0_DOMAIN=your-tenant.auth0.com
+AUTH0_CLIENT_ID=your-client-id
+AUTH0_CLIENT_SECRET=your-client-secret
+AUTH0_AUDIENCE=your-api-audience
 
 # HOS configuration
 HOS_WARNING_THRESHOLD_HOURS=1.5        # Hours remaining before whiteboard warning color
 DEADHEAD_WINDOW_HOURS=4                # Minimum dead-head pairing lead time (hard constraint)
 DEADHEAD_SEARCH_WINDOW_HOURS=2         # Timer duration after delivery before dispatcher alert
+LOADING_AGE_THRESHOLD_HOURS=4         # Hours a BOL stays in Loading/Ready before IsLongWait flag
+
+# Default HOS cycle applied when cycle label is not supplied by the driver
+DEFAULT_CYCLE_LABEL=60h/7d
 
 # Email notifications
 SMTP_HOST=smtp.example.com
 SMTP_PORT=587
 SMTP_USER=notifications@switchyard.com
 SMTP_PASS=your-smtp-password
-NOTIFY_DISPATCH_EMAIL=dispatch@switchyard.com
+DISPATCH_EMAIL=dispatch@switchyard.com
 
 # Optional
 PORT=8080
@@ -788,6 +840,13 @@ Priority reading order:
    Column transitions are driven by assignment state, not by manual dispatcher input.
 5. Section 13 — The integrations adapter is the only place that calls the .NET system.
    No exceptions.
+
+**Design system alignment note — Run ID:**
+The design system references a "Run ID" on whiteboard cards after BOL commitment. This concept
+was never implemented in the data model. The BOL's UUID (`PlanBOLRecord.id`) is the identifier
+used throughout — there is no separate Run ID entity. Do not introduce one without explicit
+direction. If the design system surfaces a Run ID field on a card, display a truncated form
+of the BOL UUID (`%.8s` + ellipsis) as a stand-in until alignment is resolved.
 
 Suggested implementation order:
   1. go.mod and project scaffold (Section 6)
