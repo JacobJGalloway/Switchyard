@@ -251,6 +251,23 @@ func (h *PlanBOLHandler) MarkLoaded(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// GetStatusHistory handles GET /api/plan-bol/:id/history
+func (h *PlanBOLHandler) GetStatusHistory(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseUUID(w, chi.URLParam(r, "id"))
+	if !ok {
+		return
+	}
+	history, err := h.bolRepo.GetStatusHistory(r.Context(), id)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to fetch status history")
+		return
+	}
+	if history == nil {
+		history = []*models.BOLStatusHistory{}
+	}
+	writeJSON(w, http.StatusOK, history)
+}
+
 // GetTruckState handles GET /api/plan-bol/:id/truck-state
 func (h *PlanBOLHandler) GetTruckState(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseUUID(w, chi.URLParam(r, "id"))

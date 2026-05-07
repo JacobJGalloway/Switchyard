@@ -48,6 +48,7 @@ type PlanBOLRepository interface {
 	MarkStopProcessed(ctx context.Context, stopID uuid.UUID, processedAt time.Time) error
 	CreateSnapshot(ctx context.Context, s *models.TruckInventorySnapshot) error
 	GetSnapshots(ctx context.Context, planBOLID uuid.UUID) ([]*models.TruckInventorySnapshot, error)
+	GetStatusHistory(ctx context.Context, planBOLID uuid.UUID) ([]*models.BOLStatusHistory, error)
 }
 
 type AssignmentRepository interface {

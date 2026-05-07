@@ -140,6 +140,32 @@ func (r *PlanBOLRepo) GetSnapshots(ctx context.Context, planBOLID uuid.UUID) ([]
 	return out, rows.Err()
 }
 
+func (r *PlanBOLRepo) GetStatusHistory(ctx context.Context, planBOLID uuid.UUID) ([]*models.BOLStatusHistory, error) {
+	rows, err := r.db.Query(ctx,
+		`SELECT id, plan_bol_id, from_status, to_status, changed_at
+		 FROM plan_bol_status_history WHERE plan_bol_id=$1 ORDER BY changed_at`, planBOLID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var out []*models.BOLStatusHistory
+	for rows.Next() {
+		h := &models.BOLStatusHistory{}
+		var fromStatus *string
+		var toStatus string
+		if err := rows.Scan(&h.ID, &h.PlanBOLID, &fromStatus, &toStatus, &h.ChangedAt); err != nil {
+			return nil, err
+		}
+		if fromStatus != nil {
+			s := models.PlanBOLStatus(*fromStatus)
+			h.FromStatus = &s
+		}
+		h.ToStatus = models.PlanBOLStatus(toStatus)
+		out = append(out, h)
+	}
+	return out, rows.Err()
+}
+
 func scanStop(row interface{ Scan(...any) error }) (*models.PlanBOLStop, error) {
 	s := &models.PlanBOLStop{}
 	var stopType string

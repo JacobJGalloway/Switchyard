@@ -33,6 +33,7 @@ func main() {
 	viper.SetDefault("DEADHEAD_SEARCH_WINDOW_HOURS", 2.0)
 	viper.SetDefault("LOADING_AGE_THRESHOLD_HOURS", 4.0)
 	viper.SetDefault("DEFAULT_CYCLE_LABEL", "60h/7d")
+	viper.SetDefault("WAREHOUSE_IDS", "WH001,WH002,WH003")
 
 	dbURL := viper.GetString("DATABASE_URL")
 	if dbURL == "" {
@@ -142,6 +143,9 @@ func main() {
 	deadheadHandler := handlers.NewDeadheadHandler(pairingRepo, viper.GetFloat64("DEADHEAD_WINDOW_HOURS"))
 	invoiceHandler := handlers.NewInvoiceHandler(invoiceRepo)
 	whiteboardHandler := handlers.NewWhiteboardHandler(wbSvc, tmpl)
+	analyticsHandler := handlers.NewAnalyticsHandler(pool)
+	warehouseIDs := strings.Split(viper.GetString("WAREHOUSE_IDS"), ",")
+	regionalInvHandler := handlers.NewRegionalInventoryHandler(invClient, warehouseIDs)
 
 	// --- Router ---
 	// --- JWT middleware ---
@@ -185,6 +189,7 @@ func main() {
 		r.Post("/api/plan-bol/{id}/validate", planBOLHandler.Validate)
 		r.Patch("/api/plan-bol/{id}/mark-loaded", planBOLHandler.MarkLoaded)
 		r.Get("/api/plan-bol/{id}/truck-state", planBOLHandler.GetTruckState)
+		r.Get("/api/plan-bol/{id}/history", planBOLHandler.GetStatusHistory)
 
 		// Dispatcher / route planner only — requires bol:plan permission
 		r.Group(func(r chi.Router) {
@@ -218,6 +223,12 @@ func main() {
 		r.Get("/api/deadhead/eligible", deadheadHandler.GetEligible)
 		r.Post("/api/deadhead/pair", deadheadHandler.Pair)
 		r.Delete("/api/deadhead/{pairingId}", deadheadHandler.Cancel)
+
+		// Analytics
+		r.Get("/api/analytics/summary", analyticsHandler.GetSummary)
+
+		// Regional inventory lookup
+		r.Get("/api/inventory/region", regionalInvHandler.GetRegional)
 
 		// Invoices (read-only)
 		r.Get("/api/invoice/{id}", invoiceHandler.GetInvoice)

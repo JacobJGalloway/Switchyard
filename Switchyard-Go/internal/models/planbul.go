@@ -41,6 +41,14 @@ type PlanBOLRecord struct {
 	SubmittedTransactionID *string    `json:"submitted_transaction_id,omitempty"`
 }
 
+type BOLStatusHistory struct {
+	ID         uuid.UUID      `json:"id"`
+	PlanBOLID  uuid.UUID      `json:"plan_bol_id"`
+	FromStatus *PlanBOLStatus `json:"from_status"` // nil on initial creation
+	ToStatus   PlanBOLStatus  `json:"to_status"`
+	ChangedAt  time.Time      `json:"changed_at"`
+}
+
 type PlanBOLStop struct {
 	ID            uuid.UUID      `json:"id"`
 	PlanBOLID     uuid.UUID      `json:"plan_bol_id"`
