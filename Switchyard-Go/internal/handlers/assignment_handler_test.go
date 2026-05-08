@@ -89,6 +89,9 @@ func (r *stubBOLRepo) CreateSnapshot(_ context.Context, _ *models.TruckInventory
 func (r *stubBOLRepo) GetSnapshots(_ context.Context, _ uuid.UUID) ([]*models.TruckInventorySnapshot, error) {
 	return nil, nil
 }
+func (r *stubBOLRepo) GetStatusHistory(_ context.Context, _ uuid.UUID) ([]*models.BOLStatusHistory, error) {
+	return nil, nil
+}
 
 type stubAssignEquipRepo struct{ equipment *models.Equipment }
 

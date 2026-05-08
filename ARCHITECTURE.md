@@ -1,7 +1,7 @@
 # Switchyard — Architecture v1.1
 
 > **Intended audience:** Claude Code, onboarding developers, project planning sessions.
-> **Status:** Pre-implementation architectural design. Approved concept, pending sprint start (late April / early May 2026).
+> **Status:** Sprint 1.1 complete. Core implementation shipped; deferred scope documented in §14 and §16. This file will be retired at end of 1.1 — content migrates to the relevant README files before deletion.
 > **Parent system:** [Switchyard (.NET)](https://github.com/JacobJGalloway/Switchyard) (.NET Core / React / SQLite)
 > **Sprint model:** Two-week sprints. Scope not completed by end of sprint moves to v1.2.
 
@@ -603,6 +603,7 @@ POST   /api/plan-bol/:id/commit             Commit plan, call .NET CreateBOL    
                                             (plan-progress → loading)
 POST   /api/plan-bol/:id/mark-loaded        Dock confirms trailer loaded (loading → validated)
 GET    /api/plan-bol/:id/truck-state        Truck inventory state snapshot at each stop
+GET    /api/plan-bol/:id/history            Status transition audit trail
 ```
 
 ### Driver
@@ -643,6 +644,16 @@ DELETE /api/deadhead/:pairingId          Cancel a confirmed pairing
 ```
 GET    /api/dispatch/board               Full Kanban board state — all columns
 GET    /api/dispatch/alerts              HOS warnings, breakdown alerts, expiring timers
+```
+
+### Analytics
+```
+GET    /api/analytics/summary            BOL counts by status, stop completion rate, 7/30-day throughput
+```
+
+### Regional Inventory
+```
+GET    /api/inventory/region             Fan-out across all network warehouses; optional ?sku= filter
 ```
 
 ### Internal Invoice
@@ -750,6 +761,10 @@ SMTP_USER=notifications@switchyard.com
 SMTP_PASS=your-smtp-password
 DISPATCH_EMAIL=dispatch@switchyard.com
 
+# Regional inventory fan-out — comma-separated warehouse IDs
+# v1.2: replaced by WAREHOUSE_REGIONS once region field added to Warehouse model
+WAREHOUSE_IDS=WH001,WH002,WH003,WH004,WH005,WH006,WH007,WH008,WH009
+
 # Optional
 PORT=8080
 LOG_LEVEL=info
@@ -763,7 +778,7 @@ LOG_LEVEL=info
 |---|---|---|
 | Language | Go (open-source, BSD license) | Concurrency, low memory, compiled binary, event handler pattern |
 | Router | `chi` | Lightweight, idiomatic, composable middleware |
-| DB queries | `sqlc` | Type-safe, generated from SQL, no ORM magic |
+| DB queries | `pgx/v5` (raw queries) | Direct driver — simpler than sqlc for this query volume; no code-gen step |
 | Migrations | `golang-migrate` | Versioned schema |
 | Email | `gomail` or `net/smtp` | Lightweight, no external service dependency |
 | Templates | `html/template` (stdlib) | No dependency, peelable when frontend separates |
@@ -805,11 +820,13 @@ Go backend calls existing system for:
 Features from the existing Switchyard (.NET) README that have architectural impact on
 the Go backend and should be kept visible during sprint planning.
 
-- **BOL status history** — `PlanBOLRecord.status` transitions provide this for the planning
-  phase. Pairs with the existing system's audit trail when that feature is built.
-- **Analytics endpoints** — `TruckInventorySnapshot` and `DeliveryConfirmation` records
-  provide the raw data foundation. Analytics endpoints and reporting charts are scoped
-  to v1.2 (see Section 16).
+- **BOL status history** — ✅ **Shipped in 1.1.** Migration 016 adds a PostgreSQL trigger
+  that captures every status transition automatically. `GET /api/plan-bol/:id/history`
+  returns the full audit trail. No Go code changes required for future status additions.
+- **Analytics endpoints** — ✅ **Partially shipped in 1.1.** `GET /api/analytics/summary`
+  returns BOL counts by status, stop completion rate, and 7/30-day fulfilled throughput
+  from existing tables. Revenue vs. profit charts and operating cost overlays remain
+  scoped to v1.2 (requires operating cost tracking — see Section 16).
 - **Returns** — not in scope for 1.1. Flagged for future sprint. Likely implemented as
   `stop_type: return_depot` on `PlanBOLStop` — the constraint solver already accommodates
   an additional stop type without structural changes.
@@ -914,7 +931,14 @@ Deliberate driver and/or equipment handoff at a defined point in an active BOL r
 - **Route planner constraint:** the 1.1 route planner explicitly assumes a single driver and
   equipment set for the full run. Mid-BOL handoffs are rejected until this feature is implemented.
 
+### Warehouse Region Attribute
+- Add `region` column to the `Warehouses` SQLite table and the Go data model
+- Replace `WAREHOUSE_IDS` flat env list with `WAREHOUSE_REGIONS=midwest`
+- Handler resolves warehouse IDs from DB at startup — new warehouses in a region are
+  picked up automatically without a config change
+- `GET /api/inventory/region` gains a `?region=` filter param
+
 ### README Refresh
 - Rewrite the main `README.md` to reflect Switchyard naming and current 1.1 scope
 - Add a `Future Features` section aligned to this document's v1.2 candidate list
-- Scheduled for early in the week following 1.1 sprint kickoff
+- Switchyard-Go `README.md` updated during 1.1 sprint — main project README still pending

@@ -53,6 +53,9 @@ func (m *mockPlanBOLRepo) CreateSnapshot(_ context.Context, _ *models.TruckInven
 func (m *mockPlanBOLRepo) GetSnapshots(_ context.Context, _ uuid.UUID) ([]*models.TruckInventorySnapshot, error) {
 	panic("not implemented")
 }
+func (m *mockPlanBOLRepo) GetStatusHistory(_ context.Context, _ uuid.UUID) ([]*models.BOLStatusHistory, error) {
+	panic("not implemented")
+}
 
 // --- solvePlan tests (pure function — no DB, no I/O) ---
 

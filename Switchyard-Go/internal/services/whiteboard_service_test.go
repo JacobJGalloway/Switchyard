@@ -99,6 +99,9 @@ func (r *wbBOLRepo) CreateSnapshot(_ context.Context, _ *models.TruckInventorySn
 func (r *wbBOLRepo) GetSnapshots(_ context.Context, _ uuid.UUID) ([]*models.TruckInventorySnapshot, error) {
 	panic("not implemented")
 }
+func (r *wbBOLRepo) GetStatusHistory(_ context.Context, _ uuid.UUID) ([]*models.BOLStatusHistory, error) {
+	panic("not implemented")
+}
 
 type wbEquipRepo struct {
 	all         []*models.Equipment
