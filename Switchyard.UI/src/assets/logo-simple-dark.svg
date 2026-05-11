@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="18.5mm"
+   height="18.5mm"
+   viewBox="0 0 18.5 18.5"
+   version="1.1"
+   id="svg1"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <g
+     id="layer1">
+    <path
+       d="m 6.5852893,14.403107 h 4.8402437 c 0.757849,-0.47829 0.983589,-0.81302 1.384779,-1.671 0.151124,-0.8982 0.201215,-2.03235 0.212501,-3.35052 H 3.3584593 v -0.11174 c 0,-2.48159 0.6722564,-4.218699 2.016769,-5.211334 0.559317,-0.416908 1.2315723,-0.665065 2.016768,-0.744476 H 12.23224 V 4.137103 H 7.3919963 C 6.6951334,4.582377 6.4482615,4.88436 6.2030911,5.41868 5.8775753,6.256977 5.8448492,6.395857 5.7947148,7.892627 h 9.6643542 v 1.37722 c 0,2.48158 -0.672255,4.21869 -2.016768,5.21133 -0.559317,0.41691 -1.231573,0.66506 -2.016768,0.74447 H 6.5852893 Z"
+       id="path32"
+       style="font-size:23.3726px;line-height:1.25;font-family:Omicron;-inkscape-font-specification:Omicron;letter-spacing:0px;word-spacing:0px;display:inline;fill:#2c5f8d;fill-opacity:1;stroke-width:0.316146"
+       aria-label="s" />
+    <ellipse
+       style="display:inline;fill:#eeeeee;fill-opacity:1;stroke:none;stroke-width:0.0270567;stroke-opacity:1"
+       id="circle32"
+       cx="-3.600163"
+       cy="-8.7941217"
+       transform="matrix(-0.50590239,0.86259073,-0.86939329,-0.49412074,0,0)"
+       rx="1.0039818"
+       ry="1.0118984" />
+    <ellipse
+       style="display:inline;fill:#eeeeee;fill-opacity:1;stroke:none;stroke-width:0.0270554;stroke-opacity:1"
+       id="circle33"
+       cx="9.4666681"
+       cy="17.260109"
+       rx="1.0158336"
+       ry="1" />
+    <ellipse
+       style="display:inline;fill:#eeeeee;fill-opacity:1;stroke:none;stroke-width:0.0270554;stroke-opacity:1"
+       id="circle34"
+       cx="1.2518332"
+       cy="8.9021368"
+       rx="1.0158336"
+       ry="1" />
+    <ellipse
+       style="display:inline;fill:#eeeeee;fill-opacity:1;stroke:none;stroke-width:0.0270554;stroke-opacity:1"
+       id="circle42"
+       cx="17.248167"
+       cy="8.9019003"
+       rx="1.0158336"
+       ry="1" />
+    <ellipse
+       style="display:none;fill:none;fill-opacity:1;stroke:#ff0000;stroke-width:0.147414;stroke-opacity:1"
+       id="circle41"
+       cx="3.325387"
+       cy="12.59561"
+       transform="matrix(0.86939329,-0.49412074,0.50590239,0.86259073,0,0)"
+       rx="8.0211906"
+       ry="7.9584365" />
+  </g>
+</svg>

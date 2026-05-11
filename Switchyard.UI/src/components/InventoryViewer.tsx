@@ -13,7 +13,7 @@ export default function InventoryViewer() {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([])
   const [stores, setStores] = useState<Store[]>([])
   const [selectedLocationId, setSelectedLocationId] = useState('')
-  const [projectedFilter, setProjectedFilter] = useState<'All' | 'Yes' | 'No'>('All')
+  const [projectedFilter, setProjectedFilter] = useState<'All' | 'Exclusive' | 'Ignored'>('All')
   const [results, setResults] = useState<Map<InventoryType, InventoryItem[]>>(new Map())
   const [activeTab, setActiveTab] = useState<InventoryType>('Clothing')
   const [currentPage, setCurrentPage] = useState(1)
@@ -48,7 +48,7 @@ export default function InventoryViewer() {
       const filtered = new Map(
         entries.map(([type, items]) => [
           type,
-          projectedFilter === 'All' ? items : items.filter(i => i.projected === (projectedFilter === 'Yes')),
+          projectedFilter === 'All' ? items : items.filter(i => i.projected === (projectedFilter === 'Exclusive')),
         ])
       )
       setResults(filtered)
@@ -103,10 +103,10 @@ export default function InventoryViewer() {
         <label>
           Projected
           <br />
-          <select value={projectedFilter} onChange={e => setProjectedFilter(e.target.value as 'All' | 'Yes' | 'No')}>
+          <select value={projectedFilter} onChange={e => setProjectedFilter(e.target.value as 'All' | 'Exclusive' | 'Ignored')}>
             <option value="All">All</option>
-            <option value="Yes">Yes</option>
-            <option value="No">No</option>
+            <option value="Exclusive">Exclusive</option>
+            <option value="Ignored">Ignored</option>
           </select>
         </label>
 

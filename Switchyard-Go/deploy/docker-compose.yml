@@ -1,0 +1,59 @@
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       switchyard_go
+      POSTGRES_USER:     switchyard
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U switchyard -d switchyard_go"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - island
+
+  switchyard-go:
+    image: ghcr.io/jacobjgalloway/switchyard-go:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL:                  postgres://switchyard:${POSTGRES_PASSWORD}@postgres:5432/switchyard_go
+      LOGISTICS_BASE_URL:            ${LOGISTICS_BASE_URL}
+      INVENTORY_BASE_URL:            ${INVENTORY_BASE_URL}
+      AUTH0_DOMAIN:                  ${AUTH0_DOMAIN}
+      AUTH0_CLIENT_ID:               ${AUTH0_CLIENT_ID}
+      AUTH0_CLIENT_SECRET:           ${AUTH0_CLIENT_SECRET}
+      AUTH0_AUDIENCE:                ${AUTH0_AUDIENCE}
+      HOS_WARNING_THRESHOLD_HOURS:   ${HOS_WARNING_THRESHOLD_HOURS:-2.0}
+      DEADHEAD_WINDOW_HOURS:         ${DEADHEAD_WINDOW_HOURS:-4.0}
+      DEADHEAD_SEARCH_WINDOW_HOURS:  ${DEADHEAD_SEARCH_WINDOW_HOURS:-2.0}
+      LOADING_AGE_THRESHOLD_HOURS:   ${LOADING_AGE_THRESHOLD_HOURS:-4.0}
+      DEFAULT_CYCLE_LABEL:           ${DEFAULT_CYCLE_LABEL:-60h/7d}
+      SMTP_HOST:                     ${SMTP_HOST}
+      SMTP_PORT:                     ${SMTP_PORT:-587}
+      SMTP_USER:                     ${SMTP_USER}
+      SMTP_PASS:                     ${SMTP_PASS}
+      DISPATCH_EMAIL:                ${DISPATCH_EMAIL}
+      PORT:                          8080
+      LOG_LEVEL:                     ${LOG_LEVEL:-info}
+    volumes:
+      - invoices:/app/output/invoices
+    ports:
+      - "${HOST_PORT:-8080}:8080"
+    networks:
+      - island
+
+volumes:
+  pgdata:
+  invoices:
+
+networks:
+  island:
+    driver: bridge

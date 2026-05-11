@@ -53,3 +53,29 @@ dotnet test --filter "FullyQualifiedName~TestName"     # run a single test
 - `Services/Interfaces/IBillOfLadingService.cs` — service interface
 - `Controllers/BillOfLadingController.cs` — BOL creation endpoint; writes a formatted `.txt` file to `~/Downloads`
 - `Tests/` — empty; tests not yet written
+
+---
+
+## Switchyard Go Architecture (v1.1)
+
+Read `Switchyard-Go/README.md` before writing any code for the Go backend. Key constraints and API reference live there.
+
+**Go project root:** `Switchyard-Go/`
+**Module path:** `github.com/JacobJGalloway/switchyard-go`
+
+### Build & Run (Go)
+
+```bash
+cd Switchyard-Go
+go mod tidy              # resolve dependencies and generate go.sum (required first run)
+go build ./...           # build all packages
+go run ./cmd/main.go     # run the Go backend (see README for env var loading)
+go test ./...            # run all tests
+```
+
+### Key constraints (enforce without exception)
+1. **CUD authority boundary.** `PlanBOLRecord`, `PlanBOLStop`, and `TruckInventorySnapshot` are Go's domain. Committed BOL stops and inventory writes are .NET's domain. This boundary never crosses.
+2. **M2M token lives in `internal/events` only.** No other package requests, caches, or refreshes a token.
+3. **`internal/integrations` is the only .NET caller.** No handler, service, or repository may call the .NET system directly.
+4. **Business rules are rejections, not warnings.** Empty truck rule, 4-hour dead-head window, and state-level HOS limits are enforced at the service layer and return errors.
+5. **Whiteboard column transitions are derived.** Board columns follow from `PlanBOLStatus` and assignment timestamps — not dispatcher input. Read `whiteboard_service.go` before touching board code.

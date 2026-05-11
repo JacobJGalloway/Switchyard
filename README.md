@@ -14,7 +14,27 @@ Switchyard is an inventory, driver, and equipment tracking and management system
 **Shared database:** `Sqlite 3 Implementation/WarehouseData.db3`
 **Read replica:** `Sqlite 3 Implementation/WarehouseRead.db3` (auto-created on startup if not already persisted)
 
-**Design documentation:** [`ARCHITECTURE.md`](ARCHITECTURE.md) — full v1.1 architectural design (Go backend scope, business rules, data model, deployment).
+**Go backend documentation:** [`Switchyard-Go/README.md`](Switchyard-Go/README.md) — setup, environment variables, key architectural constraints, and API reference.
+
+## Prerequisites
+
+| Requirement | Version | Notes |
+|---|---|---|
+| [.NET SDK](https://dotnet.microsoft.com/download) | 10.0 | InventoryAPI and LogisticsAPI |
+| [Go](https://go.dev/dl/) | 1.25+ | Switchyard-Go backend |
+| [Node.js](https://nodejs.org/) | 24+ | Switchyard.UI |
+| [PostgreSQL](https://www.postgresql.org/download/) | 16 | Switchyard-Go backend — Docker or local install |
+| [Auth0 account](https://auth0.com/) | — | Tenant + API resource + two M2M applications |
+
+**SQLite** (used by both .NET APIs) is bundled with EF Core — no separate install required. The shared DB file lives at `Sqlite 3 Implementation/WarehouseData.db3` and is created on first startup.
+
+**PostgreSQL:** Easiest to run via Docker (`postgres:16` image). Default dev port is **5433** — if another Postgres instance is already on 5432 (e.g. a Yearly Yields container), use 5433 to avoid the conflict. See `Switchyard-Go/.env.example` for the full connection string format.
+
+**Auth0 M2M applications (free tier: 2 slots):** Switchyard uses both — one for the Scalar UI on the .NET APIs, one for the Go event handler. Confirm available M2M slots before setting up a new tenant. See [Auth0 Setup](#auth0-setup) for full configuration steps.
+
+**SMTP:** Required for email notifications (HOS warnings, breakdown alerts, dead-head expiry timer). Any SMTP-accessible mail account works in dev. Notifications can be left unconfigured early on — fill in `SMTP_*` env vars when you need them.
+
+**Go `.env` loading — known gotcha:** Viper does not auto-load `.env` files. Before running the Go backend, source your `.env` from `Switchyard-Go/` using the one-liner in `Switchyard-Go/README.md`, or set the vars directly in your shell session.
 
 ## Running the System
 
@@ -116,27 +136,20 @@ Both APIs use Auth0 JWT bearer authentication. Permissions are claim-based:
 
 ## Wanted Features
 
-### v1.1 — In Progress
-- [ ] Digital Dispatch Whiteboard — real-time Kanban board replacing the physical whiteboard; tracks drivers, equipment, and BOLs through their full lifecycle
-- [ ] PlanBOL route planning and constraint resolution — inventory-safe stop sequencing before BOL commitment
-- [ ] Driver entity, HOS tracking, and run sheet generation
-- [ ] Equipment management (truck/tractor) — scheduled maintenance and breakdown states
-- [ ] Dead-head BOL pairing — 4-hour pre-arrangement window enforcement
-- [ ] Driver-BOL-equipment assignment record
-- [ ] Delivery confirmation per store stop and internal store invoice output
-- [ ] Email notifications — HOS warnings, dead-head timer expiry, breakdown alerts, workflow completion
-- [ ] BOL status history (planning phase) — status transitions on PlanBOLRecord; pairs with future .NET audit trail
-- [ ] Rolling refresh tokens for Auth0 sessions in place of fixed-expiry client secrets
-
 ### v1.2 — June
-- [ ] Operating cost tracking — base rate per mile; roadside tow rates applied to resolved breakdown records
-- [ ] Analytics and reporting — revenue vs. profit per BOL, driver, and warehouse; built on data captured in v1.1
+- [ ] Operating cost tracking — base rate per mile; roadside tow rates applied to resolved breakdown records; required foundation for revenue vs. profit analytics
+- [ ] Advanced analytics and reporting — revenue vs. profit per BOL, driver, and warehouse; cost overlay on throughput charts; depends on operating cost tracking
+- [ ] Analytics handler refactor — extract thin `AnalyticsQuerier` interface to enable unit testing; add testcontainers-go integration test suite against real PostgreSQL
 - [ ] Returns — `return_depot` stop type on PlanBOLStop; constraint solver already accommodates the extension
+- [ ] Mid-BOL transfer stops — `transfer` stop type; formal custody checkpoint for driver/equipment handoffs mid-route; requires `DriverBOLAssignment` restructuring
+- [ ] Warehouse region attribute — `region` column on Warehouse model; replaces flat `WAREHOUSE_IDS` env list; new warehouses in a region picked up automatically without a config change
 - [ ] White-label theming — "Industrial Cool" light and dark defaults; client DNS-scoped SCSS variable overrides
 - [ ] Switchyard brand assets — logo, name, combined lockup, and "Powered by Switchyard" treatment (Light and Dark variants)
 - [ ] Extract `Data/` folders to a shared class library — domain models separated from API projects
+- [ ] Migrate .NET APIs from SQLite to PostgreSQL — consolidate onto the PostgreSQL stack already running for the Go backend
 
 ### Backlog
+- [ ] Rolling refresh tokens for Auth0 sessions in place of fixed-expiry client secrets
 - [ ] Read replica health endpoint — expose sync lag and InSync status
 - [ ] Migrate from `EnsureCreated` to EF Core migrations for controlled schema evolution
 - [ ] Extract User Management to a dedicated identity service when the data layer splits
