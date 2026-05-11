@@ -27,6 +27,9 @@ dist/
 *Read.db3-shm
 *Read.db3-wal
 
+# Go
+coverage.out
+
 # OS
 .DS_Store
 Thumbs.db
