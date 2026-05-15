@@ -12,7 +12,7 @@ namespace Switchyard.LogisticsAPI.Models
         public string TransactionId { get; set; } = string.Empty;
         public required string LocationId { get; set; }
         public required string SKUMarker { get; set; }
-        // Positive quantity = incoming; negative quantity = outgoing
+        // Positive quantity = loaded from this location (OUT); negative quantity = delivered to this location (IN)
         public required int Quantity { get; set; }
         public bool IsProcessed { get; set; } = false;
         public DateTime? ProcessedDate { get; set; }

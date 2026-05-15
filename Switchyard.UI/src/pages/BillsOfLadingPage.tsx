@@ -95,7 +95,7 @@ export default function BillsOfLadingPage() {
               <table className={styles.table} style={{ marginTop: 0 }}>
                 <thead>
                   <tr>
-                    {['Location ID', 'SKU', 'Qty', 'Processed', 'Processed Date'].map(h => (
+                    {['Location ID', 'SKU', 'Qty', 'Direction', 'Processed', 'Processed Date'].map(h => (
                       <th key={h} className={styles.th}>{h}</th>
                     ))}
                   </tr>
@@ -105,7 +105,8 @@ export default function BillsOfLadingPage() {
                     <tr key={entry.partitionKey}>
                       <td className={styles.td}>{entry.locationId}</td>
                       <td className={styles.td}>{entry.skuMarker}</td>
-                      <td className={styles.td}>{entry.quantity}</td>
+                      <td className={styles.td}>{Math.abs(entry.quantity)}</td>
+                      <td className={styles.td}>{entry.quantity > 0 ? 'OUT' : 'IN'}</td>
                       <td className={styles.td}>{entry.isProcessed ? 'Yes' : 'No'}</td>
                       <td className={styles.td}>
                         {entry.processedDate
