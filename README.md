@@ -28,7 +28,9 @@ Switchyard is an inventory, driver, and equipment tracking and management system
 
 **SQLite** (used by both .NET APIs) is bundled with EF Core — no separate install required. The shared DB file lives at `Sqlite 3 Implementation/WarehouseData.db3` and is created on first startup.
 
-**PostgreSQL:** Easiest to run via Docker (`postgres:16` image). Default dev port is **5433** — if another Postgres instance is already on 5432 (e.g. a Yearly Yields container), use 5433 to avoid the conflict. See `Switchyard-Go/.env.example` for the full connection string format.
+**PostgreSQL:** Easiest to run via Docker (`postgres:16` image). Default dev port is **5433** — if another Postgres instance is already on 5432, use 5433 to avoid the conflict. See `Switchyard-Go/.env.example` for the full connection string format.
+
+**Go Service Initialization:** Due to how the environmental variables are read in Go, the initial setup for Docker will need to be different if the image is not up and running on a container. Subsequent restarts with the container already running are a single line restart. See the README.md under Switchyard-Go for more details.
 
 **Auth0 M2M applications (free tier: 2 slots):** Switchyard uses both — one for the Scalar UI on the .NET APIs, one for the Go event handler. Confirm available M2M slots before setting up a new tenant. See [Auth0 Setup](#auth0-setup) for full configuration steps.
 
@@ -43,11 +45,18 @@ Switchyard is an inventory, driver, and equipment tracking and management system
 dotnet run --project Switchyard.InventoryAPI
 dotnet run --project Switchyard.LogisticsAPI
 
+# Go support services — start Postgres first
+# First time: docker run -d --name switchyard-pg -e POSTGRES_PASSWORD=password -e POSTGRES_DB=switchyard -p 5433:5432 postgres:16
+docker start switchyard-pg
+cd Switchyard-Go
+Get-Content .env | Where-Object { $_ -notmatch '^\s*#' -and $_ -match '=' } | ForEach-Object { $k,$v = $_ -split '=',2; Set-Item "Env:$($k.Trim())" $v.Trim() }
+go run ./cmd/main.go
+
 # UI
 cd Switchyard.UI
 npm run dev
 
-# Tests
+# Unit Tests
 dotnet test
 
 # API docs (Scalar UI — while API is running)
