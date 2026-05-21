@@ -9,21 +9,22 @@
   <style>
     :root {
       --bg:         #363A3C;
-      --col-bg:     #1e2130;
-      --pool-bg:    #1a1c26;
-      --card-bg:    #252a3a;
-      --border:     #353a4f;
-      --text:       #e0e3ed;
-      --muted:      #7a8099;
-      --accent:     #4e7cbf;
-      --warn:       #f5a623;
-      --danger:     #e05c5c;
-      --danger-bg:  #2e1414;
-      --ok:         #4caf7d;
-      --ok-dim:     #1a2e24;
-      --hos-green:  #4caf7d;
-      --hos-yellow: #f5a623;
-      --hos-red:    #e05c5c;
+      /* v1.2: verify col/card contrast is sufficient against --bg; revert to #1e2130/#252a3a if elevation reads poorly */
+      --col-bg:     #404244;
+      --pool-bg:    #3D3F41;
+      --card-bg:    #484A4C;
+      --border:     #505254;
+      --text:       #EEEEEE;
+      --muted:      #9CA3AF;
+      --accent:     #3A73C1;
+      --warn:       #D97706;
+      --danger:     #C23B3B;
+      --danger-bg:  #2d1c1c;
+      --ok:         #1F9D55;
+      --ok-dim:     #1a2b22;
+      --hos-green:  #1F9D55;
+      --hos-yellow: #D97706;
+      --hos-red:    #C23B3B;
 
       /* Entity type chip colors — define here so light mode can override */
       --chip-bol-bg:      #1b2f4e;
