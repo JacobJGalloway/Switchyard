@@ -88,7 +88,7 @@ Introduced in 1.2. Extracted from both .NET API projects to eliminate model dupl
 New in 1.2. Required foundation for revenue vs. profit analytics.
 
 **Base rate per mile:**
-- Stored on `DriverBOLAssignment` or `PlanBOLRecord` (TBD during implementation)
+- Stored on `DriverBOLAssignment` — snapshot of the rate at the time of commitment
 - Default assumed rate: `$3.20/mile` (tractor without full trailer)
 - Flatbed tow rate: `$3.80/mile`
 
@@ -196,6 +196,10 @@ Completed prior to 1.2 sprint start — already live in the Dispatch Whiteboard.
 - "Powered by Switchyard" treatment
 - Light and Dark variants for all assets
 
+**Asset locations:**
+- Brand assets: `Switchyard.UI/src/assets/`
+- Client palette overrides: `Switchyard.UI/src/assets/clients/`
+
 **Sprint action:** confirm/close at sprint start. No active work required unless a gap is found during review.
 
 ---
@@ -209,7 +213,7 @@ Last item in 1.2. First to slide if sprint velocity runs short — no other 1.2 
 **Scope:**
 - Replace SQLite EF Core provider with Npgsql EF Core provider in both .NET APIs
 - Update connection strings in `appsettings.Development.json`
-- Replace `EnsureCreated` with EF Core migrations (aligns with backlog item)
+- Replace `EnsureCreated` with initial EF Core migrations setup (foundational work; full migrations strategy is a 1.3 backlog item)
 - Validate CQRS read replica sync behavior against PostgreSQL
 - Update prerequisites documentation
 
@@ -310,8 +314,8 @@ Solution projects:
 
 1.2 priority order:
   1. Operating cost tracking (Go) — base rate/mile, tow rate on resolved breakdowns
-  2. Advanced analytics and reporting (Go) — revenue vs. profit per BOL/driver/warehouse
-  3. Analytics handler refactor (Go) — AnalyticsQuerier interface + testcontainers-go
+  2. Analytics handler refactor (Go) — AnalyticsQuerier interface + testcontainers-go
+  3. Advanced analytics and reporting (Go) — revenue vs. profit per BOL/driver/warehouse
   4. Returns — return_depot stop type on PlanBOLStop
   5. Warehouse region attribute — region column on Warehouse, replaces WAREHOUSE_IDS env list
   6. White-label theming — Industrial Cool light/dark defaults, DNS-scoped SCSS overrides
@@ -320,7 +324,7 @@ Solution projects:
   9. Migrate .NET APIs from SQLite to PostgreSQL (slides first if velocity runs short)
 
 Key constraints:
-  - Analytics work (items 2-3) depends on operating cost tracking (item 1) being complete
+  - Analytics refactor (item 2) and advanced analytics (item 3) both depend on operating cost tracking (item 1) being complete; item 3 also depends on item 2
   - Switchyard.Domain extraction is compiler-guided — move Data/ folders, fix usings
   - return_depot constraint solver accommodation already exists — completion work only
   - Warehouse region: intra-region only in 1.2; cross-region deferred pending user signal
