@@ -1,7 +1,9 @@
 <div align="center">
 <img src="Switchyard.UI/src/assets/logo-full-name-light.png" />
 </div>
-# Switchyard 1.1
+<div align="center">
+   # 1.1
+</div>
 
 Switchyard is an inventory, driver, and equipment tracking and management system which coordinates logistics operations across a network of warehouses and stores. Inventory is tracked per location; Bills of Lading govern movement between any combination of stops — from same-day local transfers to multi-stop OTR runs with partial loads. Authenticated via Auth0.
 
