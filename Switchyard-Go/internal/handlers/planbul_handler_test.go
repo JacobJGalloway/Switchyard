@@ -335,6 +335,44 @@ func TestPlanBOL_GetStatusHistory_Returns200(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 }
 
+// --- AddReturnDepot ---
+
+func TestPlanBOL_AddReturnDepot_BadUUID_Returns400(t *testing.T) {
+	h := newPlanBOLHandler(&stubPlanBOLSvc{}, &stubBOLRepo{}, &stubLogisticsClient{})
+	req := withIDParam(httptest.NewRequest(http.MethodPost, "/", nil), "not-a-uuid")
+	rec := httptest.NewRecorder()
+	h.AddReturnDepot(rec, req)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
+func TestPlanBOL_AddReturnDepot_NotFound_Returns404(t *testing.T) {
+	h := newPlanBOLHandler(&stubPlanBOLSvc{}, &stubBOLRepo{}, &stubLogisticsClient{})
+	req := withIDParam(httptest.NewRequest(http.MethodPost, "/", nil), uuid.New().String())
+	rec := httptest.NewRecorder()
+	h.AddReturnDepot(rec, req)
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+}
+
+func TestPlanBOL_AddReturnDepot_WrongStatus_Returns409(t *testing.T) {
+	plan := bolWithStatus(models.PlanBOLStatusValidated)
+	h := newPlanBOLHandler(&stubPlanBOLSvc{}, &stubBOLRepo{bol: plan}, &stubLogisticsClient{})
+	req := withIDParam(httptest.NewRequest(http.MethodPost, "/", nil), plan.ID.String())
+	rec := httptest.NewRecorder()
+	h.AddReturnDepot(rec, req)
+	assert.Equal(t, http.StatusConflict, rec.Code)
+}
+
+func TestPlanBOL_AddReturnDepot_Success_Returns201(t *testing.T) {
+	plan := bolWithStatus(models.PlanBOLStatusSubmitted)
+	existingStop := &models.PlanBOLStop{ID: uuid.New(), PlanBOLID: plan.ID, Sequence: 1, StopType: models.StopTypeStore}
+	repo := &stubBOLRepo{bol: plan, stops: []*models.PlanBOLStop{existingStop}}
+	h := newPlanBOLHandler(&stubPlanBOLSvc{}, repo, &stubLogisticsClient{})
+	req := withIDParam(httptest.NewRequest(http.MethodPost, "/", nil), plan.ID.String())
+	rec := httptest.NewRecorder()
+	h.AddReturnDepot(rec, req)
+	assert.Equal(t, http.StatusCreated, rec.Code)
+}
+
 // --- buildLineEntries ---
 
 func TestBuildLineEntries_MixedStops(t *testing.T) {
@@ -372,6 +410,19 @@ func TestBuildLineEntries_MixedStops(t *testing.T) {
 func TestBuildLineEntries_EmptyStops(t *testing.T) {
 	assert.Empty(t, buildLineEntries(nil))
 	assert.Empty(t, buildLineEntries([]*models.PlanBOLStop{}))
+}
+
+func TestBuildLineEntries_ReturnDepotExcluded(t *testing.T) {
+	stops := []*models.PlanBOLStop{
+		{LocationID: "WH001", StopType: models.StopTypeWarehouse, DeliveryItems: map[string]int{"SKU-A": 5}},
+		{LocationID: "ST0001", StopType: models.StopTypeStore, DeliveryItems: map[string]int{"SKU-A": 5}},
+		{LocationID: "WH001", StopType: models.StopTypeReturnDepot},
+	}
+	entries := buildLineEntries(stops)
+	assert.Len(t, entries, 2)
+	for _, e := range entries {
+		assert.NotEqual(t, models.StopTypeReturnDepot, models.StopType(e.LocationID))
+	}
 }
 
 func TestPlanBOL_GetTruckState_Returns200(t *testing.T) {

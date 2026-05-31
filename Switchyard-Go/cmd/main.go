@@ -197,6 +197,7 @@ func main() {
 			r.Use(authmw.RequirePermission("plan:bol"))
 			r.Post("/api/plan-bol/{id}/begin-planning", planBOLHandler.BeginPlanning)
 			r.Post("/api/plan-bol/{id}/commit", planBOLHandler.Commit)
+			r.Post("/api/plan-bol/{id}/return-depot", planBOLHandler.AddReturnDepot)
 		})
 
 		// Drivers

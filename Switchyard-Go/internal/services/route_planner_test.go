@@ -15,11 +15,12 @@ import (
 // --- mock for ValidatePlan tests ---
 
 type mockPlanBOLRepo struct {
+	plan  *models.PlanBOLRecord
 	stops []*models.PlanBOLStop
 	err   error
 }
 
-func (m *mockPlanBOLRepo) GetStops(ctx context.Context, id uuid.UUID) ([]*models.PlanBOLStop, error) {
+func (m *mockPlanBOLRepo) GetStops(_ context.Context, _ uuid.UUID) ([]*models.PlanBOLStop, error) {
 	return m.stops, m.err
 }
 
@@ -27,7 +28,10 @@ func (m *mockPlanBOLRepo) Create(_ context.Context, _ *models.PlanBOLRecord) err
 	panic("not implemented")
 }
 func (m *mockPlanBOLRepo) GetByID(_ context.Context, _ uuid.UUID) (*models.PlanBOLRecord, error) {
-	panic("not implemented")
+	if m.plan != nil {
+		return m.plan, nil
+	}
+	return &models.PlanBOLRecord{ID: uuid.New(), OriginatingWhID: "wh-1"}, nil
 }
 func (m *mockPlanBOLRepo) GetByStatus(_ context.Context, _ models.PlanBOLStatus) ([]*models.PlanBOLRecord, error) {
 	panic("not implemented")
@@ -305,6 +309,42 @@ func TestValidatePlan_TruckNotEmptyAtEnd(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, violations, 1)
 	assert.Contains(t, violations[0], "truck not empty")
+}
+
+func TestValidatePlan_ReturnDepot_TruckNotEmptyRuleWaived(t *testing.T) {
+	// When the final stop is return_depot, leftover inventory is intentional — no violation.
+	planID := uuid.New()
+	repo := &mockPlanBOLRepo{
+		plan: &models.PlanBOLRecord{ID: planID, OriginatingWhID: "wh-1"},
+		stops: []*models.PlanBOLStop{
+			{Sequence: 1, LocationID: "wh-1", StopType: models.StopTypeWarehouse, DeliveryItems: map[string]int{"SKU-A": 10}},
+			{Sequence: 2, LocationID: "store-1", StopType: models.StopTypeStore, DeliveryItems: map[string]int{"SKU-A": 3}},
+			{Sequence: 3, LocationID: "wh-1", StopType: models.StopTypeReturnDepot},
+		},
+	}
+	svc := NewRoutePlannerService(repo, nil, nil)
+	violations, err := svc.ValidatePlan(context.Background(), planID)
+	require.NoError(t, err)
+	assert.Empty(t, violations)
+}
+
+func TestValidatePlan_ReturnDepot_WrongLocation_Violation(t *testing.T) {
+	// return_depot must point at the originating warehouse — wrong location is a violation.
+	planID := uuid.New()
+	repo := &mockPlanBOLRepo{
+		plan: &models.PlanBOLRecord{ID: planID, OriginatingWhID: "wh-1"},
+		stops: []*models.PlanBOLStop{
+			{Sequence: 1, LocationID: "wh-1", StopType: models.StopTypeWarehouse, DeliveryItems: map[string]int{"SKU-A": 5}},
+			{Sequence: 2, LocationID: "store-1", StopType: models.StopTypeStore, DeliveryItems: map[string]int{"SKU-A": 3}},
+			{Sequence: 3, LocationID: "wh-99", StopType: models.StopTypeReturnDepot},
+		},
+	}
+	svc := NewRoutePlannerService(repo, nil, nil)
+	violations, err := svc.ValidatePlan(context.Background(), planID)
+	require.NoError(t, err)
+	require.Len(t, violations, 1)
+	assert.Contains(t, violations[0], "wh-99")
+	assert.Contains(t, violations[0], "wh-1")
 }
 
 func TestValidatePlan_MultipleViolations(t *testing.T) {

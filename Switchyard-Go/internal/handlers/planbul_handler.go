@@ -285,12 +285,62 @@ func (h *PlanBOLHandler) GetTruckState(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, snapshots)
 }
 
+// AddReturnDepot handles POST /api/plan-bol/:id/return-depot
+// Appends a return_depot stop pointing at the originating warehouse when a delivery
+// cannot be completed and the driver must return remaining inventory.
+// Only valid for submitted BOLs (committed and en route).
+func (h *PlanBOLHandler) AddReturnDepot(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseUUID(w, chi.URLParam(r, "id"))
+	if !ok {
+		return
+	}
+	plan, err := h.bolRepo.GetByID(r.Context(), id)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "plan BOL not found")
+		return
+	}
+	if plan.Status != models.PlanBOLStatusSubmitted {
+		writeError(w, http.StatusConflict, "plan BOL must be in submitted status to add a return depot stop")
+		return
+	}
+
+	stops, err := h.bolRepo.GetStops(r.Context(), id)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to fetch stops")
+		return
+	}
+
+	nextSeq := len(stops) + 1
+	for _, s := range stops {
+		if s.Sequence >= nextSeq {
+			nextSeq = s.Sequence + 1
+		}
+	}
+
+	stop := &models.PlanBOLStop{
+		ID:         uuid.New(),
+		PlanBOLID:  id,
+		Sequence:   nextSeq,
+		LocationID: plan.OriginatingWhID,
+		StopType:   models.StopTypeReturnDepot,
+	}
+	if err := h.bolRepo.CreateStop(r.Context(), stop); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to create return depot stop")
+		return
+	}
+	writeJSON(w, http.StatusCreated, stop)
+}
+
 // buildLineEntries converts plan BOL stops into the .NET line entry format.
 // Warehouse stops produce positive quantities (loading onto truck);
 // store stops produce negative quantities (delivering off truck).
+// Return depot stops are excluded — they are a Go-only planning concept.
 func buildLineEntries(stops []*models.PlanBOLStop) []integrations.LineEntryRequest {
 	var entries []integrations.LineEntryRequest
 	for _, stop := range stops {
+		if stop.StopType == models.StopTypeReturnDepot {
+			continue
+		}
 		sign := 1
 		if stop.StopType == models.StopTypeStore {
 			sign = -1

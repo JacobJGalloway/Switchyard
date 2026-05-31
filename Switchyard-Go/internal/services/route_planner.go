@@ -105,6 +105,11 @@ func (s *RoutePlannerService) PlanRoute(ctx context.Context, in PlanRouteInput) 
 // ValidatePlan re-runs truck inventory constraints over a persisted plan's stops.
 // Returns a list of violations; an empty slice means the plan is valid.
 func (s *RoutePlannerService) ValidatePlan(ctx context.Context, planBOLID uuid.UUID) ([]string, error) {
+	plan, err := s.planRepo.GetByID(ctx, planBOLID)
+	if err != nil {
+		return nil, fmt.Errorf("fetching plan: %w", err)
+	}
+
 	stops, err := s.planRepo.GetStops(ctx, planBOLID)
 	if err != nil {
 		return nil, fmt.Errorf("fetching stops: %w", err)
@@ -132,10 +137,22 @@ func (s *RoutePlannerService) ValidatePlan(ctx context.Context, planBOLID uuid.U
 					delete(truck, sku)
 				}
 			}
+		case models.StopTypeReturnDepot:
+			// Return leg carries no inventory — remaining items are being returned to depot.
+			// Must point back to the originating warehouse.
+			if stop.LocationID != plan.OriginatingWhID {
+				violations = append(violations, fmt.Sprintf(
+					"stop %d: return_depot location %q does not match originating warehouse %q",
+					stop.Sequence, stop.LocationID, plan.OriginatingWhID,
+				))
+			}
 		}
 	}
 
-	if len(violations) == 0 && len(truck) > 0 {
+	// Empty-truck rule does not apply when the final stop is a return_depot —
+	// leftover inventory is intentionally being returned to the originating warehouse.
+	lastStop := stops[len(stops)-1]
+	if len(violations) == 0 && len(truck) > 0 && lastStop.StopType != models.StopTypeReturnDepot {
 		var leftover []string
 		for sku, qty := range truck {
 			leftover = append(leftover, fmt.Sprintf("%s×%d", sku, qty))
