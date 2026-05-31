@@ -143,7 +143,8 @@ func main() {
 	deadheadHandler := handlers.NewDeadheadHandler(pairingRepo, viper.GetFloat64("DEADHEAD_WINDOW_HOURS"))
 	invoiceHandler := handlers.NewInvoiceHandler(invoiceRepo)
 	whiteboardHandler := handlers.NewWhiteboardHandler(wbSvc, tmpl)
-	analyticsHandler := handlers.NewAnalyticsHandler(pool)
+	analyticsRepo := pgdb.NewAnalyticsRepo(pool)
+	analyticsHandler := handlers.NewAnalyticsHandler(analyticsRepo)
 	warehouseIDs := strings.Split(viper.GetString("WAREHOUSE_IDS"), ",")
 	regionalInvHandler := handlers.NewRegionalInventoryHandler(invClient, warehouseIDs)
 
@@ -226,6 +227,7 @@ func main() {
 
 		// Analytics
 		r.Get("/api/analytics/summary", analyticsHandler.GetSummary)
+		r.Get("/api/analytics/operating-cost", analyticsHandler.GetOperatingCost)
 
 		// Regional inventory lookup
 		r.Get("/api/inventory/region", regionalInvHandler.GetRegional)

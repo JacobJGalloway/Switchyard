@@ -98,9 +98,10 @@ func (r *stubBOLRepo) GetStopByID(_ context.Context, _ uuid.UUID) (*models.PlanB
 	}
 	return r.stop, nil
 }
-func (r *stubBOLRepo) MarkStopProcessed(_ context.Context, _ uuid.UUID, _ time.Time) error {
+func (r *stubBOLRepo) MarkStopProcessed(_ context.Context, _ uuid.UUID, _ time.Time, _ *float64) error {
 	return nil
 }
+func (r *stubBOLRepo) SetMilesDriven(_ context.Context, _ uuid.UUID, _ float64) error { return nil }
 func (r *stubBOLRepo) CreateSnapshot(_ context.Context, _ *models.TruckInventorySnapshot) error {
 	return nil
 }
@@ -136,7 +137,7 @@ func (r *stubAssignEquipRepo) GetActiveMaintenanceByEquipment(_ context.Context,
 func (r *stubAssignEquipRepo) CreateBreakdownRecord(_ context.Context, _ *models.BreakdownRecord) error {
 	return nil
 }
-func (r *stubAssignEquipRepo) ResolveBreakdownRecord(_ context.Context, _ uuid.UUID, _ time.Time) error {
+func (r *stubAssignEquipRepo) ResolveBreakdownRecord(_ context.Context, _ uuid.UUID, _ time.Time, _ *float64) error {
 	return nil
 }
 func (r *stubAssignEquipRepo) GetActiveBreakdownByEquipment(_ context.Context, _ uuid.UUID) (*models.BreakdownRecord, error) {

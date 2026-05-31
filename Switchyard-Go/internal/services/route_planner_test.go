@@ -44,7 +44,10 @@ func (m *mockPlanBOLRepo) CreateStop(_ context.Context, _ *models.PlanBOLStop) e
 func (m *mockPlanBOLRepo) GetStopByID(_ context.Context, _ uuid.UUID) (*models.PlanBOLStop, error) {
 	panic("not implemented")
 }
-func (m *mockPlanBOLRepo) MarkStopProcessed(_ context.Context, _ uuid.UUID, _ time.Time) error {
+func (m *mockPlanBOLRepo) MarkStopProcessed(_ context.Context, _ uuid.UUID, _ time.Time, _ *float64) error {
+	panic("not implemented")
+}
+func (m *mockPlanBOLRepo) SetMilesDriven(_ context.Context, _ uuid.UUID, _ float64) error {
 	panic("not implemented")
 }
 func (m *mockPlanBOLRepo) CreateSnapshot(_ context.Context, _ *models.TruckInventorySnapshot) error {

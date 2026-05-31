@@ -13,11 +13,11 @@ type AssignmentRepo struct{ db *pgxpool.Pool }
 
 func NewAssignmentRepo(db *pgxpool.Pool) *AssignmentRepo { return &AssignmentRepo{db: db} }
 
-const assignmentCols = `id, driver_id, plan_bol_id, equipment_id, assigned_at, departed_at, fulfilled_at, deadhead_confirmed_at`
+const assignmentCols = `id, driver_id, plan_bol_id, equipment_id, base_rate_per_mile, assigned_at, departed_at, fulfilled_at, deadhead_confirmed_at`
 
 func scanAssignment(row interface{ Scan(...any) error }) (*models.DriverBOLAssignment, error) {
 	a := &models.DriverBOLAssignment{}
-	err := row.Scan(&a.ID, &a.DriverID, &a.PlanBOLID, &a.EquipmentID, &a.AssignedAt, &a.DepartedAt, &a.FulfilledAt, &a.DeadheadConfirmedAt)
+	err := row.Scan(&a.ID, &a.DriverID, &a.PlanBOLID, &a.EquipmentID, &a.BaseRatePerMile, &a.AssignedAt, &a.DepartedAt, &a.FulfilledAt, &a.DeadheadConfirmedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -27,8 +27,8 @@ func scanAssignment(row interface{ Scan(...any) error }) (*models.DriverBOLAssig
 func (r *AssignmentRepo) Create(ctx context.Context, a *models.DriverBOLAssignment) error {
 	_, err := r.db.Exec(ctx,
 		`INSERT INTO driver_bol_assignment (`+assignmentCols+`)
-		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-		a.ID, a.DriverID, a.PlanBOLID, a.EquipmentID, a.AssignedAt, a.DepartedAt, a.FulfilledAt, a.DeadheadConfirmedAt)
+		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+		a.ID, a.DriverID, a.PlanBOLID, a.EquipmentID, a.BaseRatePerMile, a.AssignedAt, a.DepartedAt, a.FulfilledAt, a.DeadheadConfirmedAt)
 	return err
 }
 

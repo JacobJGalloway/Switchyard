@@ -35,6 +35,7 @@ type PlanBOLRecord struct {
 	CreatedAt       time.Time     `json:"created_at"`
 	SubmittedAt            *time.Time `json:"submitted_at,omitempty"`
 	FulfilledAt            *time.Time `json:"fulfilled_at,omitempty"`
+	MilesDriven            *float64   `json:"miles_driven,omitempty"`
 	// SubmittedTransactionID is the .NET Logistics API transaction ID assigned
 	// when the plan is committed via POST /api/BillOfLading. Required for
 	// ProcessStop calls on subsequent driver stop logs.
@@ -60,5 +61,6 @@ type PlanBOLStop struct {
 	DeliveryItems map[string]int `json:"delivery_items,omitempty"`
 	IsProcessed   bool           `json:"is_processed"`
 	ProcessedAt   *time.Time     `json:"processed_at,omitempty"`
+	MilesLeg      *float64       `json:"miles_leg,omitempty"`
 	DriverLogRef  *string        `json:"driver_log_ref,omitempty"`
 }

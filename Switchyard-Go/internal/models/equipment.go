@@ -54,4 +54,5 @@ type BreakdownRecord struct {
 	LoadAttached  bool          `json:"load_attached"`
 	ReportedAt    time.Time     `json:"reported_at"`
 	ResolvedAt    *time.Time    `json:"resolved_at,omitempty"`
+	TowCost       *float64      `json:"tow_cost,omitempty"`
 }

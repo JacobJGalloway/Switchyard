@@ -59,12 +59,13 @@ func NewAssignmentHandler(
 }
 
 type createAssignmentRequest struct {
-	DriverID          string  `json:"driver_id"`
-	PlanBOLID         string  `json:"plan_bol_id"`
-	EquipmentID       string  `json:"equipment_id"`
-	EstimatedRunHours float64 `json:"estimated_run_hours"`
-	StateCode         string  `json:"state_code"`
-	CycleLabel        string  `json:"cycle_label"`
+	DriverID          string   `json:"driver_id"`
+	PlanBOLID         string   `json:"plan_bol_id"`
+	EquipmentID       string   `json:"equipment_id"`
+	EstimatedRunHours float64  `json:"estimated_run_hours"`
+	StateCode         string   `json:"state_code"`
+	CycleLabel        string   `json:"cycle_label"`
+	BaseRatePerMile   *float64 `json:"base_rate_per_mile"`
 }
 
 type assignmentResponse struct {
@@ -129,12 +130,17 @@ func (h *AssignmentHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	baseRate := 3.20
+	if req.BaseRatePerMile != nil {
+		baseRate = *req.BaseRatePerMile
+	}
 	assignment := &models.DriverBOLAssignment{
-		ID:          uuid.New(),
-		DriverID:    driverID,
-		PlanBOLID:   planBOLID,
-		EquipmentID: equipmentID,
-		AssignedAt:  time.Now().UTC(),
+		ID:              uuid.New(),
+		DriverID:        driverID,
+		PlanBOLID:       planBOLID,
+		EquipmentID:     equipmentID,
+		BaseRatePerMile: baseRate,
+		AssignedAt:      time.Now().UTC(),
 	}
 	if err := h.assignRepo.Create(r.Context(), assignment); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to create assignment")

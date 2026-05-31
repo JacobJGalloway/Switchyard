@@ -124,6 +124,7 @@ func (h *DriverHandler) LogStop(w http.ResponseWriter, r *http.Request) {
 
 	var req struct {
 		LoggedAt *time.Time `json:"logged_at"`
+		MilesLeg *float64   `json:"miles_leg"`
 	}
 	json.NewDecoder(r.Body).Decode(&req)
 	loggedAt := time.Now().UTC()
@@ -151,7 +152,7 @@ func (h *DriverHandler) LogStop(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.bolRepo.MarkStopProcessed(r.Context(), stopID, loggedAt); err != nil {
+	if err := h.bolRepo.MarkStopProcessed(r.Context(), stopID, loggedAt, req.MilesLeg); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to mark stop processed")
 		return
 	}
@@ -163,17 +164,24 @@ func (h *DriverHandler) LogStop(w http.ResponseWriter, r *http.Request) {
 		_ = h.logistics.ProcessStop(r.Context(), *bol.SubmittedTransactionID, stop.LocationID)
 	}
 
-	// If all stops are now processed, auto-fulfill the assignment.
+	// If all stops are now processed, total miles and auto-fulfill the assignment.
 	allStops, err := h.bolRepo.GetStops(r.Context(), stop.PlanBOLID)
 	if err == nil {
 		allProcessed := true
+		var totalMiles float64
 		for _, s := range allStops {
 			if !s.IsProcessed {
 				allProcessed = false
 				break
 			}
+			if s.MilesLeg != nil {
+				totalMiles += *s.MilesLeg
+			}
 		}
 		if allProcessed {
+			if totalMiles > 0 {
+				_ = h.bolRepo.SetMilesDriven(r.Context(), stop.PlanBOLID, totalMiles)
+			}
 			assignment, err := h.assignRepo.GetActiveByDriver(r.Context(), driverID)
 			if err == nil && assignment != nil {
 				now := time.Now().UTC()

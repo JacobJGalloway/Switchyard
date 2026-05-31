@@ -33,7 +33,7 @@ type EquipmentRepository interface {
 	ResolveMaintenanceRecord(ctx context.Context, id uuid.UUID, completedAt time.Time) error
 	CreateBreakdownRecord(ctx context.Context, r *models.BreakdownRecord) error
 	GetActiveBreakdownByEquipment(ctx context.Context, equipmentID uuid.UUID) (*models.BreakdownRecord, error)
-	ResolveBreakdownRecord(ctx context.Context, id uuid.UUID, resolvedAt time.Time) error
+	ResolveBreakdownRecord(ctx context.Context, id uuid.UUID, resolvedAt time.Time, towCost *float64) error
 }
 
 type PlanBOLRepository interface {
@@ -45,7 +45,8 @@ type PlanBOLRepository interface {
 	CreateStop(ctx context.Context, s *models.PlanBOLStop) error
 	GetStopByID(ctx context.Context, stopID uuid.UUID) (*models.PlanBOLStop, error)
 	GetStops(ctx context.Context, planBOLID uuid.UUID) ([]*models.PlanBOLStop, error)
-	MarkStopProcessed(ctx context.Context, stopID uuid.UUID, processedAt time.Time) error
+	MarkStopProcessed(ctx context.Context, stopID uuid.UUID, processedAt time.Time, milesLeg *float64) error
+	SetMilesDriven(ctx context.Context, id uuid.UUID, miles float64) error
 	CreateSnapshot(ctx context.Context, s *models.TruckInventorySnapshot) error
 	GetSnapshots(ctx context.Context, planBOLID uuid.UUID) ([]*models.TruckInventorySnapshot, error)
 	GetStatusHistory(ctx context.Context, planBOLID uuid.UUID) ([]*models.BOLStatusHistory, error)
@@ -84,4 +85,13 @@ type InvoiceRepository interface {
 	CreateInvoice(ctx context.Context, i *models.InternalInvoice) error
 	GetInvoice(ctx context.Context, id uuid.UUID) (*models.InternalInvoice, error)
 	GetInvoicesByStore(ctx context.Context, storeID string) ([]*models.InternalInvoice, error)
+}
+
+type AnalyticsQuerier interface {
+	BOLsByStatus(ctx context.Context) ([]models.BOLStatusCount, error)
+	StopCompletionRate(ctx context.Context) (float64, error)
+	FulfilledInWindow(ctx context.Context, since time.Time) (int, error)
+	OperatingCostByBOL(ctx context.Context) ([]models.BOLOperatingCost, error)
+	OperatingCostByDriver(ctx context.Context) ([]models.DriverOperatingCost, error)
+	OperatingCostByWarehouse(ctx context.Context) ([]models.WarehouseOperatingCost, error)
 }

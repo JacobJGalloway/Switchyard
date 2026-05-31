@@ -203,11 +203,18 @@ func (h *EquipmentHandler) ReportBreakdown(w http.ResponseWriter, r *http.Reques
 
 // Resolve handles PATCH /api/equipment/:id/resolve
 // Resolves the active maintenance or breakdown record and returns equipment to available.
+// For breakdown resolution, an optional tow_cost may be provided in the request body.
 func (h *EquipmentHandler) Resolve(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseUUID(w, chi.URLParam(r, "id"))
 	if !ok {
 		return
 	}
+
+	var req struct {
+		TowCost *float64 `json:"tow_cost"`
+	}
+	json.NewDecoder(r.Body).Decode(&req)
+
 	equip, err := h.equipRepo.GetByID(r.Context(), id)
 	if err != nil {
 		writeError(w, http.StatusNotFound, "equipment not found")
@@ -232,7 +239,7 @@ func (h *EquipmentHandler) Resolve(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusNotFound, "no active breakdown record found")
 			return
 		}
-		if err := h.equipRepo.ResolveBreakdownRecord(r.Context(), rec.ID, now); err != nil {
+		if err := h.equipRepo.ResolveBreakdownRecord(r.Context(), rec.ID, now, req.TowCost); err != nil {
 			writeError(w, http.StatusInternalServerError, "failed to resolve breakdown record")
 			return
 		}
