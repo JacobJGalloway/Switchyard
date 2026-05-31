@@ -33,7 +33,6 @@ func main() {
 	viper.SetDefault("DEADHEAD_SEARCH_WINDOW_HOURS", 2.0)
 	viper.SetDefault("LOADING_AGE_THRESHOLD_HOURS", 4.0)
 	viper.SetDefault("DEFAULT_CYCLE_LABEL", "60h/7d")
-	viper.SetDefault("WAREHOUSE_IDS", "WH001,WH002,WH003,WH004,WH005,WH006,WH007,WH008,WH009")
 
 	dbURL := viper.GetString("DATABASE_URL")
 	if dbURL == "" {
@@ -73,6 +72,7 @@ func main() {
 	pairingRepo := pgdb.NewPairingRepo(pool)
 	bolRepo := pgdb.NewPlanBOLRepo(pool)
 	invoiceRepo := pgdb.NewInvoiceRepo(pool)
+	warehouseRepo := pgdb.NewWarehouseRepo(pool)
 
 	// --- Notification service (no upstream deps) ---
 	notifySvc := services.NewNotificationService(services.NotificationConfig{
@@ -145,8 +145,7 @@ func main() {
 	whiteboardHandler := handlers.NewWhiteboardHandler(wbSvc, tmpl)
 	analyticsRepo := pgdb.NewAnalyticsRepo(pool)
 	analyticsHandler := handlers.NewAnalyticsHandler(analyticsRepo)
-	warehouseIDs := strings.Split(viper.GetString("WAREHOUSE_IDS"), ",")
-	regionalInvHandler := handlers.NewRegionalInventoryHandler(invClient, warehouseIDs)
+	regionalInvHandler := handlers.NewRegionalInventoryHandler(invClient, warehouseRepo)
 
 	// --- Router ---
 	// --- JWT middleware ---

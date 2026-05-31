@@ -87,6 +87,12 @@ type InvoiceRepository interface {
 	GetInvoicesByStore(ctx context.Context, storeID string) ([]*models.InternalInvoice, error)
 }
 
+type WarehouseRepository interface {
+	GetAll(ctx context.Context) ([]*models.Warehouse, error)
+	GetByRegion(ctx context.Context, region string) ([]*models.Warehouse, error)
+	Create(ctx context.Context, w *models.Warehouse) error
+}
+
 type AnalyticsQuerier interface {
 	BOLsByStatus(ctx context.Context) ([]models.BOLStatusCount, error)
 	StopCompletionRate(ctx context.Context) (float64, error)
