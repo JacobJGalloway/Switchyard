@@ -3,7 +3,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Switchyard.LogisticsAPI.Data;
 using Switchyard.LogisticsAPI.Data.Repositories;
-using Switchyard.LogisticsAPI.Models;
+using Switchyard.Domain;
 
 namespace Switchyard.LogisticsAPI.Tests.Repositories
 {

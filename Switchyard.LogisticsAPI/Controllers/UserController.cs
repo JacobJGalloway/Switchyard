@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Switchyard.LogisticsAPI.Models;
+using Switchyard.Domain;
 using Switchyard.LogisticsAPI.Services.Interfaces;
 
 namespace Switchyard.LogisticsAPI.Controllers

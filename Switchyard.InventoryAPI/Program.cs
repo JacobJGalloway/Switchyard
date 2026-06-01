@@ -7,7 +7,7 @@ using System.Text.Json.Nodes;
 using Switchyard.InventoryAPI.Data;
 using Switchyard.InventoryAPI.Data.Interfaces;
 using Switchyard.InventoryAPI.Data.Sync;
-using Switchyard.InventoryAPI.Models;
+using Switchyard.Domain;
 using Switchyard.InventoryAPI.Services;
 using Switchyard.InventoryAPI.Services.Interfaces;
 

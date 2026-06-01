@@ -2,7 +2,7 @@
 using Auth0.AuthenticationApi.Models;
 using Auth0.ManagementApi;
 using Auth0.ManagementApi.Models;
-using Switchyard.LogisticsAPI.Models;
+using Switchyard.Domain;
 using Switchyard.LogisticsAPI.Services.Interfaces;
 
 namespace Switchyard.LogisticsAPI.Services

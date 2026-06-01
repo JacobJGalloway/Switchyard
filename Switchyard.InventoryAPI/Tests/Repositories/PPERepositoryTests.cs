@@ -4,7 +4,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Switchyard.InventoryAPI.Data;
 using Switchyard.InventoryAPI.Data.Repositories;
-using Switchyard.InventoryAPI.Models;
+using Switchyard.Domain;
 
 namespace Switchyard.InventoryAPI.Tests.Repositories
 {

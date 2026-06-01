@@ -7,7 +7,7 @@ using System.Text.Json.Nodes;
 using Switchyard.LogisticsAPI.Data;
 using Switchyard.LogisticsAPI.Data.Interfaces;
 using Switchyard.LogisticsAPI.Data.Sync;
-using Switchyard.LogisticsAPI.Models;
+using Switchyard.Domain;
 using Switchyard.LogisticsAPI.Services;
 using Switchyard.LogisticsAPI.Services.Interfaces;
 

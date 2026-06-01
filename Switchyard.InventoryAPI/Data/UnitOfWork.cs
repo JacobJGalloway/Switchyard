@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Switchyard.InventoryAPI.Data.Interfaces;
 using Switchyard.InventoryAPI.Data.Repositories;
-using Switchyard.InventoryAPI.Models;
+using Switchyard.Domain;
 
 namespace Switchyard.InventoryAPI.Data
 {

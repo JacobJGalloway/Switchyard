@@ -1,6 +1,6 @@
 ﻿using Xunit;
-using Switchyard.LogisticsAPI.Models;
-using Switchyard.LogisticsAPI.Models.Interfaces;
+using Switchyard.Domain;
+using Switchyard.Domain.Interfaces;
 
 namespace Switchyard.LogisticsAPI.Tests.Models
 {

@@ -1,4 +1,4 @@
-﻿using Switchyard.LogisticsAPI.Models;
+﻿using Switchyard.Domain;
 
 namespace Switchyard.LogisticsAPI.Data.Interfaces
 {
