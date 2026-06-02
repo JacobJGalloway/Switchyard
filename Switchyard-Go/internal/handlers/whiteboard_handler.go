@@ -15,12 +15,19 @@ type boardService interface {
 
 // WhiteboardHandler serves the dispatch Kanban board and its alert surface.
 type WhiteboardHandler struct {
-	svc  boardService
-	tmpl *template.Template // "dispatch_board" template, parsed at startup
+	svc          boardService
+	tmpl         *template.Template // "dispatch_board" template, parsed at startup
+	reactBaseURL string
 }
 
-func NewWhiteboardHandler(svc boardService, tmpl *template.Template) *WhiteboardHandler {
-	return &WhiteboardHandler{svc: svc, tmpl: tmpl}
+func NewWhiteboardHandler(svc boardService, tmpl *template.Template, reactBaseURL string) *WhiteboardHandler {
+	return &WhiteboardHandler{svc: svc, tmpl: tmpl, reactBaseURL: reactBaseURL}
+}
+
+// boardPageData wraps BoardState with view-layer concerns for the HTML template.
+type boardPageData struct {
+	*services.BoardState
+	ReactBaseURL string
 }
 
 // GetBoard handles GET /api/dispatch/board
@@ -41,7 +48,10 @@ func (h *WhiteboardHandler) GetBoardPage(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := h.tmpl.ExecuteTemplate(w, "dispatch_board", board); err != nil {
+	if err := h.tmpl.ExecuteTemplate(w, "dispatch_board", boardPageData{
+		BoardState:   board,
+		ReactBaseURL: h.reactBaseURL,
+	}); err != nil {
 		http.Error(w, "template error", http.StatusInternalServerError)
 	}
 }

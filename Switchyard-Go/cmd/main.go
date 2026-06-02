@@ -33,6 +33,7 @@ func main() {
 	viper.SetDefault("DEADHEAD_SEARCH_WINDOW_HOURS", 2.0)
 	viper.SetDefault("LOADING_AGE_THRESHOLD_HOURS", 4.0)
 	viper.SetDefault("DEFAULT_CYCLE_LABEL", "60h/7d")
+	viper.SetDefault("REACT_BASE_URL", "https://localhost:5173")
 
 	dbURL := viper.GetString("DATABASE_URL")
 	if dbURL == "" {
@@ -142,7 +143,7 @@ func main() {
 	equipmentHandler := handlers.NewEquipmentHandler(equipRepo, notifySvc)
 	deadheadHandler := handlers.NewDeadheadHandler(pairingRepo, viper.GetFloat64("DEADHEAD_WINDOW_HOURS"))
 	invoiceHandler := handlers.NewInvoiceHandler(invoiceRepo)
-	whiteboardHandler := handlers.NewWhiteboardHandler(wbSvc, tmpl)
+	whiteboardHandler := handlers.NewWhiteboardHandler(wbSvc, tmpl, viper.GetString("REACT_BASE_URL"))
 	analyticsRepo := pgdb.NewAnalyticsRepo(pool)
 	analyticsHandler := handlers.NewAnalyticsHandler(analyticsRepo)
 	regionalInvHandler := handlers.NewRegionalInventoryHandler(invClient, warehouseRepo)

@@ -26,6 +26,17 @@
       --hos-yellow: #D97706;
       --hos-red:    #C23B3B;
 
+      /* Nav / header surface — slightly darker than board bg for elevation */
+      --nav-bg: #2a2c2e;
+
+      /* Badge / tag tinted backgrounds */
+      --badge-warn-bg:       #2a2010;
+      --badge-danger-bg:     #2a0e0e;
+      --tag-loading-bg:      #2a2010;
+      --tag-ready-bg:        #1a2b22;
+      --tag-age-warn-bg:     #2a1510;
+      --tag-weekly-reset-bg: #1f0a0a;
+
       /* Entity type chip colors — define here so light mode can override */
       --chip-bol-bg:      #1b2f4e;
       --chip-bol-fg:      #7eb8f5;
@@ -68,15 +79,42 @@
 
     /* ── Header ── */
     header {
-      display: flex; align-items: center; gap: 14px;
-      padding: 9px 14px;
-      background: #0f1117;
+      display: flex; align-items: center; gap: 16px;
+      padding: 8px 16px;
+      background: var(--nav-bg);
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
     }
-    .brand    { font-size: 14px; font-weight: 700; letter-spacing: .12em; color: var(--accent); }
-    .pg-title { font-size: 13px; color: var(--muted); }
-    .stamp    { margin-left: auto; font-size: 11px; color: var(--muted); }
+    .brand-lockup {
+      display: flex; align-items: center; gap: 8px;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+    .brand-icon { width: 28px; height: 28px; display: block; }
+    .brand      { font-size: 15px; font-weight: 700; letter-spacing: .04em; color: var(--text); }
+
+    /* ── Main nav ── */
+    .main-nav {
+      display: flex; align-items: center; gap: 4px;
+      margin-left: 8px;
+    }
+    .main-nav a {
+      font-size: 13px; font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      transition: color .15s;
+    }
+    .main-nav a:hover    { color: var(--text); }
+    .main-nav a.nav-active {
+      color: var(--accent);
+      border-bottom: 2px solid var(--accent);
+      border-radius: 0;
+      padding-bottom: 3px;
+    }
+
+    .stamp { margin-left: auto; font-size: 11px; color: var(--muted); }
 
     /* ── Board grid — 7 columns ── */
     /* Left 5: workflow pipeline | Right 2: resource pools */
@@ -146,18 +184,18 @@
       background: var(--border); color: var(--muted);
       margin-top: 4px;
     }
-    .tag.loading      { background: #2a2010; color: var(--warn); }
-    .tag.ready        { background: var(--ok-dim); color: var(--ok); }
-    .tag.age-warn     { background: #2a1510; color: var(--danger); }
-    .tag.weekly-reset { background: #1f0a0a; color: var(--danger); }
+    .tag.loading      { background: var(--tag-loading-bg);       color: var(--warn); }
+    .tag.ready        { background: var(--tag-ready-bg);         color: var(--ok); }
+    .tag.age-warn     { background: var(--tag-age-warn-bg);      color: var(--danger); }
+    .tag.weekly-reset { background: var(--tag-weekly-reset-bg);  color: var(--danger); }
 
     .badge {
       background: var(--border); color: var(--muted);
       font-size: 10px; font-weight: 600;
       padding: 1px 6px; border-radius: 10px;
     }
-    .badge.bd-warn   { background: #2a2010; color: var(--warn); }
-    .badge.bd-danger { background: #2a0e0e; color: var(--danger); }
+    .badge.bd-warn   { background: var(--badge-warn-bg);   color: var(--warn); }
+    .badge.bd-danger { background: var(--badge-danger-bg); color: var(--danger); }
 
     /* ── Status pills (design system §status-pill) ── */
     .pill {
@@ -240,9 +278,22 @@
 <body>
 
 <header>
-  <span class="brand">SWITCHYARD</span>
-  <span class="pg-title">Dispatch Board</span>
-  <span class="stamp">{{.GeneratedAt.Format "15:04:05"}} &mdash; refreshes every 30 s</span>
+  <a href="{{.ReactBaseURL}}/" class="brand-lockup">
+    <svg class="brand-icon" viewBox="0 0 18.5 18.5" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#3A73C1" d="m 6.5852893,14.403107 h 4.8402437 c 0.757849,-0.47829 0.983589,-0.81302 1.384779,-1.671 0.151124,-0.8982 0.201215,-2.03235 0.212501,-3.35052 H 3.3584593 v -0.11174 c 0,-2.48159 0.6722564,-4.218699 2.016769,-5.211334 0.559317,-0.416908 1.2315723,-0.665065 2.016768,-0.744476 H 12.23224 V 4.137103 H 7.3919963 C 6.6951334,4.582377 6.4482615,4.88436 6.2030911,5.41868 5.8775753,6.256977 5.8448492,6.395857 5.7947148,7.892627 h 9.6643542 v 1.37722 c 0,2.48158 -0.672255,4.21869 -2.016768,5.21133 -0.559317,0.41691 -1.231573,0.66506 -2.016768,0.74447 H 6.5852893 Z"/>
+    </svg>
+    <span class="brand">Switchyard</span>
+  </a>
+
+  <nav class="main-nav">
+    <a href="{{.ReactBaseURL}}/">Dashboard</a>
+    <a href="{{.ReactBaseURL}}/inventory">Inventory</a>
+    <a href="{{.ReactBaseURL}}/bills-of-lading">Bills of Lading</a>
+    <a href="{{.ReactBaseURL}}/users">Users</a>
+    <a href="{{.ReactBaseURL}}/whiteboard" class="nav-active">Whiteboard</a>
+  </nav>
+
+  <span class="stamp">{{.GeneratedAt.Format "15:04"}} CT &mdash; auto-refreshes every 30 s</span>
 </header>
 
 <div class="board">

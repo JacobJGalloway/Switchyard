@@ -31,7 +31,7 @@ func (s *stubBoardSvc) GetAlerts(_ context.Context) ([]*services.BoardAlert, err
 // --- GetBoard ---
 
 func TestWhiteboard_GetBoard_ServiceError_Returns500(t *testing.T) {
-	h := NewWhiteboardHandler(&stubBoardSvc{err: errors.New("db error")}, nil)
+	h := NewWhiteboardHandler(&stubBoardSvc{err: errors.New("db error")}, nil, "")
 	req := httptest.NewRequest(http.MethodGet, "/api/dispatch/board", nil)
 	rec := httptest.NewRecorder()
 	h.GetBoard(rec, req)
@@ -39,7 +39,7 @@ func TestWhiteboard_GetBoard_ServiceError_Returns500(t *testing.T) {
 }
 
 func TestWhiteboard_GetBoard_Success_Returns200(t *testing.T) {
-	h := NewWhiteboardHandler(&stubBoardSvc{}, nil)
+	h := NewWhiteboardHandler(&stubBoardSvc{}, nil, "")
 	req := httptest.NewRequest(http.MethodGet, "/api/dispatch/board", nil)
 	rec := httptest.NewRecorder()
 	h.GetBoard(rec, req)
@@ -49,7 +49,7 @@ func TestWhiteboard_GetBoard_Success_Returns200(t *testing.T) {
 // --- GetAlerts ---
 
 func TestWhiteboard_GetAlerts_ServiceError_Returns500(t *testing.T) {
-	h := NewWhiteboardHandler(&stubBoardSvc{err: errors.New("db error")}, nil)
+	h := NewWhiteboardHandler(&stubBoardSvc{err: errors.New("db error")}, nil, "")
 	req := httptest.NewRequest(http.MethodGet, "/api/dispatch/alerts", nil)
 	rec := httptest.NewRecorder()
 	h.GetAlerts(rec, req)
@@ -57,7 +57,7 @@ func TestWhiteboard_GetAlerts_ServiceError_Returns500(t *testing.T) {
 }
 
 func TestWhiteboard_GetAlerts_Success_Returns200(t *testing.T) {
-	h := NewWhiteboardHandler(&stubBoardSvc{}, nil)
+	h := NewWhiteboardHandler(&stubBoardSvc{}, nil, "")
 	req := httptest.NewRequest(http.MethodGet, "/api/dispatch/alerts", nil)
 	rec := httptest.NewRecorder()
 	h.GetAlerts(rec, req)
