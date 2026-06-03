@@ -1,7 +1,8 @@
 <div align="center">
 <img src="Switchyard.UI/src/assets/logo-full-name-light.png" />
 </div>
-# Switchyard 1.1
+
+# Switchyard 1.2
 
 Switchyard is an inventory, driver, and equipment tracking and management system which coordinates logistics operations across a network of warehouses and stores. Inventory is tracked per location; Bills of Lading govern movement between any combination of stops — from same-day local transfers to multi-stop OTR runs with partial loads. Authenticated via Auth0.
 
@@ -11,11 +12,9 @@ Switchyard is an inventory, driver, and equipment tracking and management system
 |---|---|---|
 | `Switchyard.InventoryAPI` | Inventory API — Clothing, PPE, Tools | 7000 |
 | `Switchyard.LogisticsAPI` | Logistics API — Bills of Lading, Stores, Warehouses, Users | 7001 |
+| `Switchyard.Domain` | Shared class library — domain models for both .NET APIs | — |
 | `Switchyard.UI` | React/TypeScript client UI | 5173 |
 | `Switchyard-Go` | Go backend — PlanBOL, Dispatch Whiteboard, HOS, Equipment | 8080 |
-
-**Shared database:** `Sqlite 3 Implementation/WarehouseData.db3`
-**Read replica:** `Sqlite 3 Implementation/WarehouseRead.db3` (auto-created on startup if not already persisted)
 
 **Go backend documentation:** [`Switchyard-Go/README.md`](Switchyard-Go/README.md) — setup, environment variables, key architectural constraints, and API reference.
 
@@ -26,12 +25,10 @@ Switchyard is an inventory, driver, and equipment tracking and management system
 | [.NET SDK](https://dotnet.microsoft.com/download) | 10.0 | InventoryAPI and LogisticsAPI |
 | [Go](https://go.dev/dl/) | 1.25+ | Switchyard-Go backend |
 | [Node.js](https://nodejs.org/) | 24+ | Switchyard.UI |
-| [PostgreSQL](https://www.postgresql.org/download/) | 16 | Switchyard-Go backend — Docker or local install |
+| [PostgreSQL](https://www.postgresql.org/download/) | 16 | All backends — Docker or local install |
 | [Auth0 account](https://auth0.com/) | — | Tenant + API resource + two M2M applications |
 
-**SQLite** (used by both .NET APIs) is bundled with EF Core — no separate install required. The shared DB file lives at `Sqlite 3 Implementation/WarehouseData.db3` and is created on first startup.
-
-**PostgreSQL:** Easiest to run via Docker (`postgres:16` image). Default dev port is **5433** — if another Postgres instance is already on 5432, use 5433 to avoid the conflict. See `Switchyard-Go/.env.example` for the full connection string format.
+**PostgreSQL:** Used by both the Go backend and the .NET APIs. Easiest to run via Docker (`postgres:16` image). Default dev port is **5433** — if another Postgres instance is already on 5432, use 5433 to avoid the conflict. See `Switchyard-Go/.env.example` for the full connection string format. The .NET APIs connect to separate databases (`switchyard_inventory`, `switchyard_logistics`) on the same instance.
 
 **Go Service Initialization:** Due to how the environmental variables are read in Go, the initial setup for Docker will need to be different if the image is not up and running on a container. Subsequent restarts with the container already running are a single line restart. See the README.md under Switchyard-Go for more details.
 
@@ -61,6 +58,7 @@ npm run dev
 
 # Unit Tests
 dotnet test
+go test ./...
 
 # API docs (Scalar UI — while API is running)
 # Inventory: https://localhost:7000/scalar/v1
@@ -70,16 +68,17 @@ dotnet test
 ## Architecture
 
 ### CQRS Read Replica
-Both APIs maintain a read replica (`WarehouseInventoryRead.db3` / `WarehouseLogisticsRead.db3`) synced asynchronously after every write:
-- Write operations target `WarehouseData.db3`
-- Read operations target the API's own `WarehouseRead.db3` (all `AsNoTracking`)
+Both .NET APIs maintain a read replica synced asynchronously after every write:
+- Write operations target the primary PostgreSQL database
+- Read operations target the read replica database (all `AsNoTracking`)
 - `SaveChangesInterceptor` → `Channel<SyncJob>` → `BackgroundService` (full table resync per changed entity type)
 - `GET /api/Audit` on each API reports write vs read row counts with an `InSync` flag
 
 ### Data Layer Pattern
 - **Unit of Work** over repositories — services depend on `IUnitOfWork`
 - **Repositories** — separate write context (CUD) and read context (queries)
-- **EF Core** with SQLite; `EnsureCreated` on startup for both DBs; initial full sync enqueued at startup
+- **EF Core** with PostgreSQL (Npgsql); migrations applied on startup for write context; `EnsureCreated` for read replica
+- **Switchyard.Domain** — shared class library containing all entity models and interfaces; neither API project owns domain models directly
 
 ### Auth
 Both APIs use Auth0 JWT bearer authentication. Permissions are claim-based:
@@ -142,27 +141,27 @@ Both APIs use Auth0 JWT bearer authentication. Permissions are claim-based:
     "Audience": "your-api-audience",
     "ScalarClientId": "your-m2m-client-id",
     "ScalarClientSecret": "your-m2m-client-secret"
+  },
+  "ConnectionStrings": {
+    "InventoryWrite": "Host=localhost;Port=5433;Database=switchyard_inventory;Username=postgres;Password=password",
+    "InventoryRead": "Host=localhost;Port=5433;Database=switchyard_inventory_read;Username=postgres;Password=password"
   }
 }
 ```
 
 ## Wanted Features
 
-### v1.2 — June
-- [ ] Operating cost tracking — base rate per mile; roadside tow rates applied to resolved breakdown records; required foundation for revenue vs. profit analytics
-- [ ] Advanced analytics and reporting — revenue vs. profit per BOL, driver, and warehouse; cost overlay on throughput charts; depends on operating cost tracking
-- [ ] Analytics handler refactor — extract thin `AnalyticsQuerier` interface to enable unit testing; add testcontainers-go integration test suite against real PostgreSQL
-- [ ] Returns — `return_depot` stop type on PlanBOLStop; constraint solver already accommodates the extension
+### v1.3 — Next sprint
 - [ ] Mid-BOL transfer stops — `transfer` stop type; formal custody checkpoint for driver/equipment handoffs mid-route; requires `DriverBOLAssignment` restructuring
-- [ ] Warehouse region attribute — `region` column on Warehouse model; replaces flat `WAREHOUSE_IDS` env list; new warehouses in a region picked up automatically without a config change
-- [ ] White-label theming — "Industrial Cool" light and dark defaults; client DNS-scoped SCSS variable overrides
-- [ ] Switchyard brand assets — logo, name, combined lockup, and "Powered by Switchyard" treatment (Light and Dark variants)
-- [ ] Extract `Data/` folders to a shared class library — domain models separated from API projects
-- [ ] Migrate .NET APIs from SQLite to PostgreSQL — consolidate onto the PostgreSQL stack already running for the Go backend
+- [ ] Demo reset / reseed script — date-relative seed so the board always looks like a live operational day at demo time
+- [ ] Two-company demo seed — Company A (Monday morning, default brand) and Company B (mid-week complexity, client palette override)
+- [ ] Dispatch board dark mode nuance rework + favicon swap
+- [ ] ARIA compliance audit — board columns, cards, icon-only buttons, skip-nav
+- [ ] Color contrast audit (WCAG AA) — verify all text/bg combinations across light and dark themes
 
 ### Backlog
 - [ ] Rolling refresh tokens for Auth0 sessions in place of fixed-expiry client secrets
 - [ ] Read replica health endpoint — expose sync lag and InSync status
-- [ ] Migrate from `EnsureCreated` to EF Core migrations for controlled schema evolution
 - [ ] Extract User Management to a dedicated identity service when the data layer splits
 - [ ] Scalar branding — Switchyard logo and name above the API title; currently blocked by Scalar's limited logo support in the .NET package
+- [ ] SKU unit price — extend inventory model to hold unit price; enables revenue vs. profit analytics
