@@ -1,6 +1,6 @@
 ﻿using Xunit;
-using Switchyard.InventoryAPI.Models;
-using Switchyard.InventoryAPI.Models.Interfaces;
+using Switchyard.Domain;
+using Switchyard.Domain.Interfaces;
 
 namespace Switchyard.InventoryAPI.Tests.Models
 {

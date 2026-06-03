@@ -1,7 +1,7 @@
 ﻿using Xunit;
 using Moq;
 using Switchyard.LogisticsAPI.Data.Interfaces;
-using Switchyard.LogisticsAPI.Models;
+using Switchyard.Domain;
 using Switchyard.LogisticsAPI.Services;
 
 namespace Switchyard.LogisticsAPI.Tests.Services

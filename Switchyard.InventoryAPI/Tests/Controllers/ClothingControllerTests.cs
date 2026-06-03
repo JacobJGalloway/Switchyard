@@ -2,7 +2,7 @@
 using Moq;
 using Microsoft.AspNetCore.Mvc;
 using Switchyard.InventoryAPI.Controllers;
-using Switchyard.InventoryAPI.Models;
+using Switchyard.Domain;
 using Switchyard.InventoryAPI.Services.Interfaces;
 
 namespace Switchyard.InventoryAPI.Tests.Controllers

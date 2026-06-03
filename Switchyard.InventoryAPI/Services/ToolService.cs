@@ -1,5 +1,5 @@
 ﻿using Switchyard.InventoryAPI.Data.Interfaces;
-using Switchyard.InventoryAPI.Models;
+using Switchyard.Domain;
 using Switchyard.InventoryAPI.Services.Interfaces;
 
 namespace Switchyard.InventoryAPI.Services

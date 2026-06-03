@@ -33,7 +33,7 @@ func main() {
 	viper.SetDefault("DEADHEAD_SEARCH_WINDOW_HOURS", 2.0)
 	viper.SetDefault("LOADING_AGE_THRESHOLD_HOURS", 4.0)
 	viper.SetDefault("DEFAULT_CYCLE_LABEL", "60h/7d")
-	viper.SetDefault("WAREHOUSE_IDS", "WH001,WH002,WH003,WH004,WH005,WH006,WH007,WH008,WH009")
+	viper.SetDefault("REACT_BASE_URL", "https://localhost:5173")
 
 	dbURL := viper.GetString("DATABASE_URL")
 	if dbURL == "" {
@@ -73,6 +73,7 @@ func main() {
 	pairingRepo := pgdb.NewPairingRepo(pool)
 	bolRepo := pgdb.NewPlanBOLRepo(pool)
 	invoiceRepo := pgdb.NewInvoiceRepo(pool)
+	warehouseRepo := pgdb.NewWarehouseRepo(pool)
 
 	// --- Notification service (no upstream deps) ---
 	notifySvc := services.NewNotificationService(services.NotificationConfig{
@@ -142,10 +143,10 @@ func main() {
 	equipmentHandler := handlers.NewEquipmentHandler(equipRepo, notifySvc)
 	deadheadHandler := handlers.NewDeadheadHandler(pairingRepo, viper.GetFloat64("DEADHEAD_WINDOW_HOURS"))
 	invoiceHandler := handlers.NewInvoiceHandler(invoiceRepo)
-	whiteboardHandler := handlers.NewWhiteboardHandler(wbSvc, tmpl)
-	analyticsHandler := handlers.NewAnalyticsHandler(pool)
-	warehouseIDs := strings.Split(viper.GetString("WAREHOUSE_IDS"), ",")
-	regionalInvHandler := handlers.NewRegionalInventoryHandler(invClient, warehouseIDs)
+	whiteboardHandler := handlers.NewWhiteboardHandler(wbSvc, tmpl, viper.GetString("REACT_BASE_URL"))
+	analyticsRepo := pgdb.NewAnalyticsRepo(pool)
+	analyticsHandler := handlers.NewAnalyticsHandler(analyticsRepo)
+	regionalInvHandler := handlers.NewRegionalInventoryHandler(invClient, warehouseRepo)
 
 	// --- Router ---
 	// --- JWT middleware ---
@@ -196,6 +197,7 @@ func main() {
 			r.Use(authmw.RequirePermission("plan:bol"))
 			r.Post("/api/plan-bol/{id}/begin-planning", planBOLHandler.BeginPlanning)
 			r.Post("/api/plan-bol/{id}/commit", planBOLHandler.Commit)
+			r.Post("/api/plan-bol/{id}/return-depot", planBOLHandler.AddReturnDepot)
 		})
 
 		// Drivers
@@ -226,6 +228,7 @@ func main() {
 
 		// Analytics
 		r.Get("/api/analytics/summary", analyticsHandler.GetSummary)
+		r.Get("/api/analytics/operating-cost", analyticsHandler.GetOperatingCost)
 
 		// Regional inventory lookup
 		r.Get("/api/inventory/region", regionalInvHandler.GetRegional)

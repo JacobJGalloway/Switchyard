@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"net/http"
 	"net/http/httptest"
@@ -19,16 +20,19 @@ import (
 // --- stub ---
 
 type stubPairingRepo struct {
-	pairings []*models.PlanBOLPairing
-	created  *models.PlanBOLPairing
+	pairings         []*models.PlanBOLPairing
+	created          *models.PlanBOLPairing
+	getEligibleErr   error
+	createErr        error
+	updateStatusErr  error
 }
 
 func (r *stubPairingRepo) GetEligible(_ context.Context, _ string, _ time.Time) ([]*models.PlanBOLPairing, error) {
-	return r.pairings, nil
+	return r.pairings, r.getEligibleErr
 }
 func (r *stubPairingRepo) Create(_ context.Context, p *models.PlanBOLPairing) error {
 	r.created = p
-	return nil
+	return r.createErr
 }
 func (r *stubPairingRepo) GetByID(_ context.Context, _ uuid.UUID) (*models.PlanBOLPairing, error) {
 	return nil, nil
@@ -37,7 +41,7 @@ func (r *stubPairingRepo) GetByActiveBOL(_ context.Context, _ uuid.UUID) (*model
 	return nil, nil
 }
 func (r *stubPairingRepo) UpdateStatus(_ context.Context, _ uuid.UUID, _ models.PairingStatus) error {
-	return nil
+	return r.updateStatusErr
 }
 
 // --- GetEligible ---
@@ -194,4 +198,60 @@ func withPairingIDParam(r *http.Request, id string) *http.Request {
 	rctx := chi.NewRouteContext()
 	rctx.URLParams.Add("pairingId", id)
 	return r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+}
+
+func TestDeadheadCancel_RepoError_Returns500(t *testing.T) {
+	h := NewDeadheadHandler(&stubPairingRepo{updateStatusErr: errNotFound}, 4.0)
+	rctx := withPairingIDParam(httptest.NewRequest(http.MethodDelete, "/", nil), uuid.New().String())
+	rec := httptest.NewRecorder()
+	h.Cancel(rec, rctx)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
+func TestDeadheadPair_InvalidDeadheadBOLID_Returns400(t *testing.T) {
+	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0)
+	body := map[string]any{
+		"active_bol_id":            uuid.New().String(),
+		"deadhead_bol_id":          "not-a-uuid",
+		"estimated_fulfillment_at": time.Now().Add(6 * time.Hour),
+		"origin_warehouse":         "wh-1",
+	}
+	req := httptest.NewRequest(http.MethodPost, "/", postBody(t, body))
+	rec := httptest.NewRecorder()
+	h.Pair(rec, req)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
+func TestDeadheadPair_BadJSON_Returns400(t *testing.T) {
+	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0)
+	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte("not-json")))
+	rec := httptest.NewRecorder()
+	h.Pair(rec, req)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
+func TestDeadheadPair_RepoError_Returns500(t *testing.T) {
+	h := NewDeadheadHandler(&stubPairingRepo{createErr: errNotFound}, 4.0)
+	body := map[string]any{
+		"active_bol_id":            uuid.New().String(),
+		"deadhead_bol_id":          uuid.New().String(),
+		"estimated_fulfillment_at": time.Now().Add(6 * time.Hour),
+		"origin_warehouse":         "wh-1",
+	}
+	req := httptest.NewRequest(http.MethodPost, "/", postBody(t, body))
+	rec := httptest.NewRecorder()
+	h.Pair(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
+func TestDeadheadGetEligible_RepoError_Returns500(t *testing.T) {
+	h := NewDeadheadHandler(&stubPairingRepo{getEligibleErr: errNotFound}, 4.0)
+	q := url.Values{
+		"location":             {"wh-1"},
+		"estimated_completion": {time.Now().Add(2 * time.Hour).Format(time.RFC3339)},
+	}
+	req := httptest.NewRequest(http.MethodGet, "/?"+q.Encode(), nil)
+	rec := httptest.NewRecorder()
+	h.GetEligible(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
 }

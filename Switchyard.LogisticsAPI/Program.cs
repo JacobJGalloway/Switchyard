@@ -7,7 +7,7 @@ using System.Text.Json.Nodes;
 using Switchyard.LogisticsAPI.Data;
 using Switchyard.LogisticsAPI.Data.Interfaces;
 using Switchyard.LogisticsAPI.Data.Sync;
-using Switchyard.LogisticsAPI.Models;
+using Switchyard.Domain;
 using Switchyard.LogisticsAPI.Services;
 using Switchyard.LogisticsAPI.Services.Interfaces;
 
@@ -43,8 +43,8 @@ builder.Services.AddAuthorization(options =>
         policy => policy.RequireClaim("permissions", "manage:users"));
 });
 
-var dbPath = Path.Combine(builder.Environment.ContentRootPath, "..", "Sqlite 3 Implementation", "WarehouseData.db3");
-var readDbPath = Path.Combine(builder.Environment.ContentRootPath, "..", "Sqlite 3 Implementation", "WarehouseLogisticsRead.db3");
+var writeCs = builder.Configuration.GetConnectionString("LogisticsWrite")!;
+var readCs  = builder.Configuration.GetConnectionString("LogisticsRead")!;
 
 var syncChannel = Channel.CreateUnbounded<SyncJob>();
 builder.Services.AddSingleton(syncChannel.Writer);
@@ -53,10 +53,10 @@ builder.Services.AddSingleton(syncChannel.Reader);
 builder.Services.AddSingleton<LogisticsSyncInterceptor>();
 builder.Services.AddDbContext<LogisticsContext>((sp, options) =>
 {
-    options.UseSqlite($"Data Source={dbPath}");
+    options.UseNpgsql(writeCs);
     options.AddInterceptors(sp.GetRequiredService<LogisticsSyncInterceptor>());
 });
-builder.Services.AddDbContext<LogisticsReadContext>(options => options.UseSqlite($"Data Source={readDbPath}"));
+builder.Services.AddDbContext<LogisticsReadContext>(options => options.UseNpgsql(readCs));
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IBillOfLadingService, BillOfLadingService>();
@@ -132,7 +132,7 @@ using (var scope = app.Services.CreateScope())
 {
     var writeCtx = scope.ServiceProvider.GetRequiredService<LogisticsContext>();
     var readCtx = scope.ServiceProvider.GetRequiredService<LogisticsReadContext>();
-    writeCtx.Database.EnsureCreated();
+    writeCtx.Database.Migrate();
     readCtx.Database.EnsureCreated();
 }
 

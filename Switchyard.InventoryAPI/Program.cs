@@ -7,7 +7,7 @@ using System.Text.Json.Nodes;
 using Switchyard.InventoryAPI.Data;
 using Switchyard.InventoryAPI.Data.Interfaces;
 using Switchyard.InventoryAPI.Data.Sync;
-using Switchyard.InventoryAPI.Models;
+using Switchyard.Domain;
 using Switchyard.InventoryAPI.Services;
 using Switchyard.InventoryAPI.Services.Interfaces;
 
@@ -37,8 +37,8 @@ builder.Services.AddAuthorization(options =>
         policy => policy.RequireClaim("permissions", "read:inventory"));
 });
 
-var dbPath = Path.Combine(builder.Environment.ContentRootPath, "..", "Sqlite 3 Implementation", "WarehouseData.db3");
-var readDbPath = Path.Combine(builder.Environment.ContentRootPath, "..", "Sqlite 3 Implementation", "WarehouseInventoryRead.db3");
+var writeCs = builder.Configuration.GetConnectionString("InventoryWrite")!;
+var readCs  = builder.Configuration.GetConnectionString("InventoryRead")!;
 
 var syncChannel = Channel.CreateUnbounded<SyncJob>();
 builder.Services.AddSingleton(syncChannel.Writer);
@@ -47,10 +47,10 @@ builder.Services.AddSingleton(syncChannel.Reader);
 builder.Services.AddSingleton<InventorySyncInterceptor>();
 builder.Services.AddDbContext<InventoryContext>((sp, options) =>
 {
-    options.UseSqlite($"Data Source={dbPath}");
+    options.UseNpgsql(writeCs);
     options.AddInterceptors(sp.GetRequiredService<InventorySyncInterceptor>());
 });
-builder.Services.AddDbContext<InventoryReadContext>(options => options.UseSqlite($"Data Source={readDbPath}"));
+builder.Services.AddDbContext<InventoryReadContext>(options => options.UseNpgsql(readCs));
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IClothingService, ClothingService>();
@@ -124,7 +124,7 @@ using (var scope = app.Services.CreateScope())
 {
     var writeCtx = scope.ServiceProvider.GetRequiredService<InventoryContext>();
     var readCtx = scope.ServiceProvider.GetRequiredService<InventoryReadContext>();
-    writeCtx.Database.EnsureCreated();
+    writeCtx.Database.Migrate();
     readCtx.Database.EnsureCreated();
 }
 

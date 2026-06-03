@@ -217,3 +217,37 @@ func TestDriver_LogStop_Success_Returns204(t *testing.T) {
 	h.LogStop(rec, logStopReq(t, uuid.New(), stop.ID))
 	assert.Equal(t, http.StatusNoContent, rec.Code)
 }
+
+func TestDriver_LogStop_MarkStopError_Returns500(t *testing.T) {
+	stop := &models.PlanBOLStop{ID: uuid.New(), PlanBOLID: uuid.New(), StopType: models.StopTypeStore}
+	h := newDriverHandler(
+		&stubDriverRepo{},
+		&stubBOLRepo{stop: stop, markStopErr: errNotFound},
+		&stubHOSRepo{},
+		&stubAssignRepo{},
+		&stubDriverHOSSvc{},
+	)
+	rec := httptest.NewRecorder()
+	h.LogStop(rec, logStopReq(t, uuid.New(), stop.ID))
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
+func TestDriver_GetActiveBOL_BOLNotFound_Returns404(t *testing.T) {
+	assign := &models.DriverBOLAssignment{ID: uuid.New(), PlanBOLID: uuid.New()}
+	ar := &activeAssignRepo{active: assign}
+	// BOL repo has no bol — GetByID returns errNotFound
+	h := NewDriverHandler(&stubDriverRepo{}, &stubBOLRepo{}, &stubHOSRepo{}, ar, &stubDriverHOSSvc{}, &stubLogisticsClient{}, nil)
+	req := withIDParam(httptest.NewRequest(http.MethodGet, "/", nil), uuid.New().String())
+	rec := httptest.NewRecorder()
+	h.GetActiveBOL(rec, req)
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+}
+
+func TestDriver_GetStatusHistory_RepoError_Returns500(t *testing.T) {
+	plan := bolWithStatus(models.PlanBOLStatusDraft)
+	h := newPlanBOLHandler(&stubPlanBOLSvc{}, &stubBOLRepo{bol: plan, statusHistoryErr: errNotFound}, &stubLogisticsClient{})
+	req := withIDParam(httptest.NewRequest(http.MethodGet, "/", nil), plan.ID.String())
+	rec := httptest.NewRecorder()
+	h.GetStatusHistory(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}

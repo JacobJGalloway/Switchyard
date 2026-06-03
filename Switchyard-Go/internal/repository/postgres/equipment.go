@@ -91,9 +91,9 @@ func (r *EquipmentRepo) ResolveMaintenanceRecord(ctx context.Context, id uuid.UU
 
 func (r *EquipmentRepo) CreateBreakdownRecord(ctx context.Context, rec *models.BreakdownRecord) error {
 	_, err := r.db.Exec(ctx,
-		`INSERT INTO breakdown_record (id, equipment_id, breakdown_type, location_desc, driver_id, load_attached, reported_at, resolved_at)
-		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-		rec.ID, rec.EquipmentID, string(rec.BreakdownType), rec.LocationDesc, rec.DriverID, rec.LoadAttached, rec.ReportedAt, rec.ResolvedAt)
+		`INSERT INTO breakdown_record (id, equipment_id, breakdown_type, location_desc, driver_id, load_attached, reported_at, resolved_at, tow_cost)
+		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+		rec.ID, rec.EquipmentID, string(rec.BreakdownType), rec.LocationDesc, rec.DriverID, rec.LoadAttached, rec.ReportedAt, rec.ResolvedAt, rec.TowCost)
 	return err
 }
 
@@ -101,10 +101,10 @@ func (r *EquipmentRepo) GetActiveBreakdownByEquipment(ctx context.Context, equip
 	rec := &models.BreakdownRecord{}
 	var bdType string
 	err := r.db.QueryRow(ctx,
-		`SELECT id, equipment_id, breakdown_type, location_desc, driver_id, load_attached, reported_at, resolved_at
+		`SELECT id, equipment_id, breakdown_type, location_desc, driver_id, load_attached, reported_at, resolved_at, tow_cost
 		 FROM breakdown_record WHERE equipment_id=$1 AND resolved_at IS NULL
 		 ORDER BY reported_at DESC LIMIT 1`, equipmentID).
-		Scan(&rec.ID, &rec.EquipmentID, &bdType, &rec.LocationDesc, &rec.DriverID, &rec.LoadAttached, &rec.ReportedAt, &rec.ResolvedAt)
+		Scan(&rec.ID, &rec.EquipmentID, &bdType, &rec.LocationDesc, &rec.DriverID, &rec.LoadAttached, &rec.ReportedAt, &rec.ResolvedAt, &rec.TowCost)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +112,9 @@ func (r *EquipmentRepo) GetActiveBreakdownByEquipment(ctx context.Context, equip
 	return rec, nil
 }
 
-func (r *EquipmentRepo) ResolveBreakdownRecord(ctx context.Context, id uuid.UUID, resolvedAt time.Time) error {
-	_, err := r.db.Exec(ctx, `UPDATE breakdown_record SET resolved_at=$2 WHERE id=$1`, id, resolvedAt)
+func (r *EquipmentRepo) ResolveBreakdownRecord(ctx context.Context, id uuid.UUID, resolvedAt time.Time, towCost *float64) error {
+	_, err := r.db.Exec(ctx,
+		`UPDATE breakdown_record SET resolved_at=$2, tow_cost=$3 WHERE id=$1`,
+		id, resolvedAt, towCost)
 	return err
 }

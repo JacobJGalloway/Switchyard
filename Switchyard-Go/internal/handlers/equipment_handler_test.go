@@ -57,7 +57,7 @@ func (r *stubEquipRepo) GetActiveMaintenanceByEquipment(_ context.Context, _ uui
 func (r *stubEquipRepo) CreateBreakdownRecord(_ context.Context, _ *models.BreakdownRecord) error {
 	return r.breakErr
 }
-func (r *stubEquipRepo) ResolveBreakdownRecord(_ context.Context, _ uuid.UUID, _ time.Time) error {
+func (r *stubEquipRepo) ResolveBreakdownRecord(_ context.Context, _ uuid.UUID, _ time.Time, _ *float64) error {
 	return r.resolveErr
 }
 func (r *stubEquipRepo) GetActiveBreakdownByEquipment(_ context.Context, _ uuid.UUID) (*models.BreakdownRecord, error) {

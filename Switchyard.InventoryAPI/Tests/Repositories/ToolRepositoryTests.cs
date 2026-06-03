@@ -1,29 +1,26 @@
 ﻿using Xunit;
 using Moq;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Switchyard.InventoryAPI.Data;
 using Switchyard.InventoryAPI.Data.Repositories;
-using Switchyard.InventoryAPI.Models;
+using Switchyard.Domain;
 
 namespace Switchyard.InventoryAPI.Tests.Repositories
 {
     public class ToolRepositoryTests : IDisposable
     {
-        private readonly SqliteConnection _connection;
         private readonly InventoryContext _context;
         private readonly InventoryReadContext _readContext;
         private readonly ToolRepository _repository;
 
         public ToolRepositoryTests()
         {
-            _connection = new SqliteConnection("DataSource=:memory:");
-            _connection.Open();
+            var dbName = Guid.NewGuid().ToString();
             var writeOptions = new DbContextOptionsBuilder<InventoryContext>()
-                .UseSqlite(_connection)
+                .UseInMemoryDatabase(dbName)
                 .Options;
             var readOptions = new DbContextOptionsBuilder<InventoryReadContext>()
-                .UseSqlite(_connection)
+                .UseInMemoryDatabase(dbName)
                 .Options;
             _context = new InventoryContext(writeOptions);
             _context.Database.EnsureCreated();
@@ -35,7 +32,6 @@ namespace Switchyard.InventoryAPI.Tests.Repositories
         {
             _context.Dispose();
             _readContext.Dispose();
-            _connection.Dispose();
         }
 
         [Fact]

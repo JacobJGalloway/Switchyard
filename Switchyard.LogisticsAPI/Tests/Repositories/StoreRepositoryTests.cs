@@ -1,24 +1,21 @@
 ﻿using Xunit;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Switchyard.LogisticsAPI.Data;
 using Switchyard.LogisticsAPI.Data.Repositories;
-using Switchyard.LogisticsAPI.Models;
+using Switchyard.Domain;
 
 namespace Switchyard.LogisticsAPI.Tests.Repositories
 {
     public class StoreRepositoryTests : IDisposable
     {
-        private readonly SqliteConnection _connection;
         private readonly LogisticsReadContext _readContext;
         private readonly StoreRepository _repository;
 
         public StoreRepositoryTests()
         {
-            _connection = new SqliteConnection("DataSource=:memory:");
-            _connection.Open();
+            var dbName = Guid.NewGuid().ToString();
             var readOptions = new DbContextOptionsBuilder<LogisticsReadContext>()
-                .UseSqlite(_connection)
+                .UseInMemoryDatabase(dbName)
                 .Options;
             _readContext = new LogisticsReadContext(readOptions);
             _readContext.Database.EnsureCreated();
@@ -28,7 +25,6 @@ namespace Switchyard.LogisticsAPI.Tests.Repositories
         public void Dispose()
         {
             _readContext.Dispose();
-            _connection.Dispose();
         }
 
         [Fact]

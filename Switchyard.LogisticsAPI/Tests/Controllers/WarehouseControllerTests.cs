@@ -3,7 +3,7 @@ using Moq;
 using Microsoft.AspNetCore.Mvc;
 using Switchyard.LogisticsAPI.Controllers;
 using Switchyard.LogisticsAPI.Data.Interfaces;
-using Switchyard.LogisticsAPI.Models;
+using Switchyard.Domain;
 
 namespace Switchyard.LogisticsAPI.Tests.Controllers
 {

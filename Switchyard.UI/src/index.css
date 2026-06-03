@@ -1,15 +1,50 @@
+/* ============================================================
+   Industrial Cool — design system token definitions
+   Theme resolution order: [data-client] override → these defaults
+   ============================================================ */
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #eeeeee;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
+  /* Brand */
+  --brand-blue: #3a73c1;
   --accent: #aa3bff;
   --accent-bg: rgba(170, 59, 255, 0.1);
   --accent-border: rgba(170, 59, 255, 0.5);
-  --brand-blue: #3a73c1;
+
+  /* Neutral scale */
+  --n-0: #ffffff;
+  --n-50: #f7f7f8;
+  --n-100: #eeeeee;
+  --n-200: #e5e4e7;
+  --n-300: #d2d1d5;
+  --n-400: #9ca3af;
+  --n-500: #6b6375;
+  --n-700: #363a3c;
+  --n-900: #08060d;
+
+  /* Semantic — consistent across light and dark */
+  --info: #3a73c1;
+  --ok: #1f9d55;
+  --warn: #d97706;
+  --danger: #c23b3b;
+
+  /* Status pill backgrounds (12% alpha) and borders (45% alpha) */
+  --info-bg: rgba(58, 115, 193, 0.12);
+  --ok-bg: rgba(31, 157, 85, 0.12);
+  --warn-bg: rgba(217, 119, 6, 0.12);
+  --danger-bg: rgba(194, 59, 59, 0.12);
+  --info-border: rgba(58, 115, 193, 0.45);
+  --ok-border: rgba(31, 157, 85, 0.45);
+  --warn-border: rgba(217, 119, 6, 0.45);
+  --danger-border: rgba(194, 59, 59, 0.45);
+
+  /* Surface / text / structure — light mode defaults */
+  --text: var(--n-500);
+  --text-h: var(--n-900);
+  --bg: var(--n-100);
+  --border: var(--n-200);
+  --code-bg: #f4f3ec;
   --nav-text: #3b3a3c;
-  --surface: #eeeeee;
+  --surface: var(--n-100);
   --table-border: #3b3a3c;
   --social-bg: rgba(244, 243, 236, 0.5);
   --shadow:
@@ -51,6 +86,16 @@
   --shadow:
     rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
 }
+
+/* ============================================================
+   Client overrides — scoped to [data-client] set by VITE_CLIENT env var.
+   Only override tokens that differ from Industrial Cool defaults.
+   Logo/asset swapping is handled separately in assetResolver.ts.
+   ============================================================ */
+
+/* Digital Parts uses the same brand palette as Switchyard —
+   no color overrides required. Logo swap handled by assetResolver. */
+:root[data-client="digital-parts"] {}
 
 #root {
   width: 1126px;

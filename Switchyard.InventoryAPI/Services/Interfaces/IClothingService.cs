@@ -1,4 +1,4 @@
-﻿using Switchyard.InventoryAPI.Models;
+﻿using Switchyard.Domain;
 
 namespace Switchyard.InventoryAPI.Services.Interfaces
 {

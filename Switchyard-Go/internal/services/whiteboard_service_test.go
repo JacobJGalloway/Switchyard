@@ -92,7 +92,10 @@ func (r *wbBOLRepo) CreateStop(_ context.Context, _ *models.PlanBOLStop) error {
 func (r *wbBOLRepo) GetStopByID(_ context.Context, _ uuid.UUID) (*models.PlanBOLStop, error) {
 	panic("not implemented")
 }
-func (r *wbBOLRepo) MarkStopProcessed(_ context.Context, _ uuid.UUID, _ time.Time) error {
+func (r *wbBOLRepo) MarkStopProcessed(_ context.Context, _ uuid.UUID, _ time.Time, _ *float64) error {
+	panic("not implemented")
+}
+func (r *wbBOLRepo) SetMilesDriven(_ context.Context, _ uuid.UUID, _ float64) error {
 	panic("not implemented")
 }
 func (r *wbBOLRepo) CreateSnapshot(_ context.Context, _ *models.TruckInventorySnapshot) error {
@@ -135,7 +138,7 @@ func (r *wbEquipRepo) ResolveMaintenanceRecord(_ context.Context, _ uuid.UUID, _
 func (r *wbEquipRepo) CreateBreakdownRecord(_ context.Context, _ *models.BreakdownRecord) error {
 	panic("not implemented")
 }
-func (r *wbEquipRepo) ResolveBreakdownRecord(_ context.Context, _ uuid.UUID, _ time.Time) error {
+func (r *wbEquipRepo) ResolveBreakdownRecord(_ context.Context, _ uuid.UUID, _ time.Time, _ *float64) error {
 	panic("not implemented")
 }
 

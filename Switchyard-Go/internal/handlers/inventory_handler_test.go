@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/JacobJGalloway/switchyard-go/internal/integrations"
+	"github.com/JacobJGalloway/switchyard-go/internal/models"
 )
 
 type stubInventoryClient struct {
@@ -21,10 +22,42 @@ func (s *stubInventoryClient) GetByLocation(_ context.Context, _ string) ([]inte
 	return s.items, s.err
 }
 
+type stubWarehouseRepo struct {
+	warehouses []*models.Warehouse
+	err        error
+}
+
+func (r *stubWarehouseRepo) GetAll(_ context.Context) ([]*models.Warehouse, error) {
+	return r.warehouses, r.err
+}
+func (r *stubWarehouseRepo) GetByRegion(_ context.Context, _ string) ([]*models.Warehouse, error) {
+	return r.warehouses, r.err
+}
+func (r *stubWarehouseRepo) Create(_ context.Context, _ *models.Warehouse) error { return nil }
+
+func warehouseList(ids ...string) []*models.Warehouse {
+	whs := make([]*models.Warehouse, len(ids))
+	for i, id := range ids {
+		whs[i] = &models.Warehouse{ID: id}
+	}
+	return whs
+}
+
 // --- GetRegional ---
 
+func TestRegionalInventory_RepoError_Returns500(t *testing.T) {
+	h := NewRegionalInventoryHandler(&stubInventoryClient{}, &stubWarehouseRepo{err: errors.New("db down")})
+	req := httptest.NewRequest(http.MethodGet, "/api/inventory/region", nil)
+	rec := httptest.NewRecorder()
+	h.GetRegional(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
 func TestRegionalInventory_ClientError_Returns502(t *testing.T) {
-	h := NewRegionalInventoryHandler(&stubInventoryClient{err: errors.New("upstream down")}, []string{"WH001"})
+	h := NewRegionalInventoryHandler(
+		&stubInventoryClient{err: errors.New("upstream down")},
+		&stubWarehouseRepo{warehouses: warehouseList("WH001")},
+	)
 	req := httptest.NewRequest(http.MethodGet, "/api/inventory/region", nil)
 	rec := httptest.NewRecorder()
 	h.GetRegional(rec, req)
@@ -37,7 +70,10 @@ func TestRegionalInventory_Success_Returns200(t *testing.T) {
 		{SKUMarker: "SKU-A", Category: "clothing", LocationID: "WH001"},
 		{SKUMarker: "SKU-B", Category: "ppe", LocationID: "WH001"},
 	}
-	h := NewRegionalInventoryHandler(&stubInventoryClient{items: items}, []string{"WH001", "WH002"})
+	h := NewRegionalInventoryHandler(
+		&stubInventoryClient{items: items},
+		&stubWarehouseRepo{warehouses: warehouseList("WH001", "WH002")},
+	)
 	req := httptest.NewRequest(http.MethodGet, "/api/inventory/region", nil)
 	rec := httptest.NewRecorder()
 	h.GetRegional(rec, req)
@@ -49,8 +85,34 @@ func TestRegionalInventory_SKUFilter_Returns200(t *testing.T) {
 		{SKUMarker: "SKU-A", Category: "clothing", LocationID: "WH001"},
 		{SKUMarker: "SKU-B", Category: "ppe", LocationID: "WH001"},
 	}
-	h := NewRegionalInventoryHandler(&stubInventoryClient{items: items}, []string{"WH001"})
+	h := NewRegionalInventoryHandler(
+		&stubInventoryClient{items: items},
+		&stubWarehouseRepo{warehouses: warehouseList("WH001")},
+	)
 	req := httptest.NewRequest(http.MethodGet, "/api/inventory/region?sku=SKU-A", nil)
+	rec := httptest.NewRecorder()
+	h.GetRegional(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+}
+
+func TestRegionalInventory_RegionFilter_Returns200(t *testing.T) {
+	region := "MIDWEST"
+	h := NewRegionalInventoryHandler(
+		&stubInventoryClient{},
+		&stubWarehouseRepo{warehouses: []*models.Warehouse{{ID: "WH001", Region: &region}}},
+	)
+	req := httptest.NewRequest(http.MethodGet, "/api/inventory/region?region=MIDWEST", nil)
+	rec := httptest.NewRecorder()
+	h.GetRegional(rec, req)
+	assert.Equal(t, http.StatusOK, rec.Code)
+}
+
+func TestRegionalInventory_EmptyWarehouseList_Returns200(t *testing.T) {
+	h := NewRegionalInventoryHandler(
+		&stubInventoryClient{},
+		&stubWarehouseRepo{warehouses: []*models.Warehouse{}},
+	)
+	req := httptest.NewRequest(http.MethodGet, "/api/inventory/region", nil)
 	rec := httptest.NewRecorder()
 	h.GetRegional(rec, req)
 	assert.Equal(t, http.StatusOK, rec.Code)

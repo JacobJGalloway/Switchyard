@@ -1,28 +1,25 @@
 ﻿using Xunit;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Switchyard.LogisticsAPI.Data;
 using Switchyard.LogisticsAPI.Data.Repositories;
-using Switchyard.LogisticsAPI.Models;
+using Switchyard.Domain;
 
 namespace Switchyard.LogisticsAPI.Tests.Repositories
 {
     public class BillOfLadingRepositoryTests : IDisposable
     {
-        private readonly SqliteConnection _connection;
         private readonly LogisticsContext _context;
         private readonly LogisticsReadContext _readContext;
         private readonly BillOfLadingRepository _repository;
 
         public BillOfLadingRepositoryTests()
         {
-            _connection = new SqliteConnection("DataSource=:memory:");
-            _connection.Open();
+            var dbName = Guid.NewGuid().ToString();
             var writeOptions = new DbContextOptionsBuilder<LogisticsContext>()
-                .UseSqlite(_connection)
+                .UseInMemoryDatabase(dbName)
                 .Options;
             var readOptions = new DbContextOptionsBuilder<LogisticsReadContext>()
-                .UseSqlite(_connection)
+                .UseInMemoryDatabase(dbName)
                 .Options;
             _context = new LogisticsContext(writeOptions);
             _context.Database.EnsureCreated();
@@ -34,7 +31,6 @@ namespace Switchyard.LogisticsAPI.Tests.Repositories
         {
             _context.Dispose();
             _readContext.Dispose();
-            _connection.Dispose();
         }
 
         private static BillOfLading MakeBOL(string transactionId) => new()

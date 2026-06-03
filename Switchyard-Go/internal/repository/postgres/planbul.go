@@ -14,13 +14,13 @@ type PlanBOLRepo struct{ db *pgxpool.Pool }
 
 func NewPlanBOLRepo(db *pgxpool.Pool) *PlanBOLRepo { return &PlanBOLRepo{db: db} }
 
-const bolCols = `id, driver_id, originating_wh_id, status, created_at, submitted_at, fulfilled_at, submitted_transaction_id`
+const bolCols = `id, driver_id, originating_wh_id, status, created_at, submitted_at, fulfilled_at, miles_driven, submitted_transaction_id`
 
 func scanBOL(row interface{ Scan(...any) error }) (*models.PlanBOLRecord, error) {
 	p := &models.PlanBOLRecord{}
 	var status string
 	err := row.Scan(&p.ID, &p.DriverID, &p.OriginatingWhID, &status,
-		&p.CreatedAt, &p.SubmittedAt, &p.FulfilledAt, &p.SubmittedTransactionID)
+		&p.CreatedAt, &p.SubmittedAt, &p.FulfilledAt, &p.MilesDriven, &p.SubmittedTransactionID)
 	if err != nil {
 		return nil, err
 	}
@@ -30,9 +30,9 @@ func scanBOL(row interface{ Scan(...any) error }) (*models.PlanBOLRecord, error)
 
 func (r *PlanBOLRepo) Create(ctx context.Context, p *models.PlanBOLRecord) error {
 	_, err := r.db.Exec(ctx,
-		`INSERT INTO plan_bol_record (`+bolCols+`) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+		`INSERT INTO plan_bol_record (`+bolCols+`) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
 		p.ID, p.DriverID, p.OriginatingWhID, string(p.Status),
-		p.CreatedAt, p.SubmittedAt, p.FulfilledAt, p.SubmittedTransactionID)
+		p.CreatedAt, p.SubmittedAt, p.FulfilledAt, p.MilesDriven, p.SubmittedTransactionID)
 	return err
 }
 
@@ -75,22 +75,22 @@ func (r *PlanBOLRepo) CreateStop(ctx context.Context, s *models.PlanBOLStop) err
 		itemsJSON, _ = json.Marshal(s.DeliveryItems)
 	}
 	_, err := r.db.Exec(ctx,
-		`INSERT INTO plan_bol_stop (id, plan_bol_id, sequence, location_id, stop_type, delivery_items, is_processed, processed_at, driver_log_ref)
-		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+		`INSERT INTO plan_bol_stop (id, plan_bol_id, sequence, location_id, stop_type, delivery_items, is_processed, processed_at, miles_leg, driver_log_ref)
+		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
 		s.ID, s.PlanBOLID, s.Sequence, s.LocationID, string(s.StopType),
-		itemsJSON, s.IsProcessed, s.ProcessedAt, s.DriverLogRef)
+		itemsJSON, s.IsProcessed, s.ProcessedAt, s.MilesLeg, s.DriverLogRef)
 	return err
 }
 
 func (r *PlanBOLRepo) GetStopByID(ctx context.Context, stopID uuid.UUID) (*models.PlanBOLStop, error) {
 	return scanStop(r.db.QueryRow(ctx,
-		`SELECT id, plan_bol_id, sequence, location_id, stop_type, delivery_items, is_processed, processed_at, driver_log_ref
+		`SELECT id, plan_bol_id, sequence, location_id, stop_type, delivery_items, is_processed, processed_at, miles_leg, driver_log_ref
 		 FROM plan_bol_stop WHERE id=$1`, stopID))
 }
 
 func (r *PlanBOLRepo) GetStops(ctx context.Context, planBOLID uuid.UUID) ([]*models.PlanBOLStop, error) {
 	rows, err := r.db.Query(ctx,
-		`SELECT id, plan_bol_id, sequence, location_id, stop_type, delivery_items, is_processed, processed_at, driver_log_ref
+		`SELECT id, plan_bol_id, sequence, location_id, stop_type, delivery_items, is_processed, processed_at, miles_leg, driver_log_ref
 		 FROM plan_bol_stop WHERE plan_bol_id=$1 ORDER BY sequence`, planBOLID)
 	if err != nil {
 		return nil, err
@@ -107,9 +107,15 @@ func (r *PlanBOLRepo) GetStops(ctx context.Context, planBOLID uuid.UUID) ([]*mod
 	return out, rows.Err()
 }
 
-func (r *PlanBOLRepo) MarkStopProcessed(ctx context.Context, stopID uuid.UUID, processedAt time.Time) error {
+func (r *PlanBOLRepo) MarkStopProcessed(ctx context.Context, stopID uuid.UUID, processedAt time.Time, milesLeg *float64) error {
 	_, err := r.db.Exec(ctx,
-		`UPDATE plan_bol_stop SET is_processed=true, processed_at=$2 WHERE id=$1`, stopID, processedAt)
+		`UPDATE plan_bol_stop SET is_processed=true, processed_at=$2, miles_leg=$3 WHERE id=$1`,
+		stopID, processedAt, milesLeg)
+	return err
+}
+
+func (r *PlanBOLRepo) SetMilesDriven(ctx context.Context, id uuid.UUID, miles float64) error {
+	_, err := r.db.Exec(ctx, `UPDATE plan_bol_record SET miles_driven=$2 WHERE id=$1`, id, miles)
 	return err
 }
 
@@ -171,7 +177,7 @@ func scanStop(row interface{ Scan(...any) error }) (*models.PlanBOLStop, error) 
 	var stopType string
 	var itemsRaw []byte
 	err := row.Scan(&s.ID, &s.PlanBOLID, &s.Sequence, &s.LocationID, &stopType,
-		&itemsRaw, &s.IsProcessed, &s.ProcessedAt, &s.DriverLogRef)
+		&itemsRaw, &s.IsProcessed, &s.ProcessedAt, &s.MilesLeg, &s.DriverLogRef)
 	if err != nil {
 		return nil, err
 	}

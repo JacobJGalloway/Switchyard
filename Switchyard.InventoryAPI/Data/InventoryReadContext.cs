@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Switchyard.InventoryAPI.Models;
+using Switchyard.Domain;
 
 namespace Switchyard.InventoryAPI.Data
 {

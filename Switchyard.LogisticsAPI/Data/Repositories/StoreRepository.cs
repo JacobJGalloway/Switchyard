@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Switchyard.LogisticsAPI.Data.Interfaces;
-using Switchyard.LogisticsAPI.Models;
+using Switchyard.Domain;
 
 namespace Switchyard.LogisticsAPI.Data.Repositories
 {
