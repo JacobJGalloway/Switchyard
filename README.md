@@ -158,10 +158,10 @@ Both APIs use Auth0 JWT bearer authentication. Permissions are claim-based:
 - [ ] Dispatch board dark mode nuance rework + favicon swap
 - [ ] ARIA compliance audit — board columns, cards, icon-only buttons, skip-nav
 - [ ] Color contrast audit (WCAG AA) — verify all text/bg combinations across light and dark themes
+- [ ] Rolling refresh tokens for Auth0 sessions in place of fixed-expiry client secrets
+- [ ] SKU unit price — extend inventory model to hold unit price; enables revenue vs. profit analytics
 
 ### Backlog
-- [ ] Rolling refresh tokens for Auth0 sessions in place of fixed-expiry client secrets
 - [ ] Read replica health endpoint — expose sync lag and InSync status
 - [ ] Extract User Management to a dedicated identity service when the data layer splits
 - [ ] Scalar branding — Switchyard logo and name above the API title; currently blocked by Scalar's limited logo support in the .NET package
-- [ ] SKU unit price — extend inventory model to hold unit price; enables revenue vs. profit analytics
