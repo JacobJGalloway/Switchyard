@@ -17,10 +17,12 @@ import (
 
 // stubAnalyticsQuerier implements repository.AnalyticsQuerier for testing.
 type stubAnalyticsQuerier struct {
-	statusErr     error
-	completionErr error
-	windowErr     error
-	costErr       error
+	statusErr        error
+	completionErr    error
+	windowErr        error
+	costErr          error
+	costDriverErr    error
+	costWarehouseErr error
 }
 
 func (s *stubAnalyticsQuerier) BOLsByStatus(_ context.Context) ([]models.BOLStatusCount, error) {
@@ -52,6 +54,9 @@ func (s *stubAnalyticsQuerier) OperatingCostByBOL(_ context.Context) ([]models.B
 }
 
 func (s *stubAnalyticsQuerier) OperatingCostByDriver(_ context.Context) ([]models.DriverOperatingCost, error) {
+	if s.costDriverErr != nil {
+		return nil, s.costDriverErr
+	}
 	if s.costErr != nil {
 		return nil, s.costErr
 	}
@@ -59,6 +64,9 @@ func (s *stubAnalyticsQuerier) OperatingCostByDriver(_ context.Context) ([]model
 }
 
 func (s *stubAnalyticsQuerier) OperatingCostByWarehouse(_ context.Context) ([]models.WarehouseOperatingCost, error) {
+	if s.costWarehouseErr != nil {
+		return nil, s.costWarehouseErr
+	}
 	if s.costErr != nil {
 		return nil, s.costErr
 	}
@@ -122,8 +130,24 @@ func TestAnalytics_GetOperatingCost_Returns200(t *testing.T) {
 	assert.Contains(t, body, "by_warehouse")
 }
 
-func TestAnalytics_GetOperatingCost_Error_Returns500(t *testing.T) {
+func TestAnalytics_GetOperatingCost_BOLError_Returns500(t *testing.T) {
 	h := NewAnalyticsHandler(&stubAnalyticsQuerier{costErr: errors.New("db error")})
+	req := httptest.NewRequest(http.MethodGet, "/api/analytics/operating-cost", nil)
+	rec := httptest.NewRecorder()
+	h.GetOperatingCost(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
+func TestAnalytics_GetOperatingCost_DriverError_Returns500(t *testing.T) {
+	h := NewAnalyticsHandler(&stubAnalyticsQuerier{costDriverErr: errors.New("db error")})
+	req := httptest.NewRequest(http.MethodGet, "/api/analytics/operating-cost", nil)
+	rec := httptest.NewRecorder()
+	h.GetOperatingCost(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
+func TestAnalytics_GetOperatingCost_WarehouseError_Returns500(t *testing.T) {
+	h := NewAnalyticsHandler(&stubAnalyticsQuerier{costWarehouseErr: errors.New("db error")})
 	req := httptest.NewRequest(http.MethodGet, "/api/analytics/operating-cost", nil)
 	rec := httptest.NewRecorder()
 	h.GetOperatingCost(rec, req)

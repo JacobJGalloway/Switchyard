@@ -373,6 +373,50 @@ func TestPlanBOL_AddReturnDepot_Success_Returns201(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, rec.Code)
 }
 
+func TestPlanBOL_AddReturnDepot_CreateStopError_Returns500(t *testing.T) {
+	plan := bolWithStatus(models.PlanBOLStatusSubmitted)
+	existingStop := &models.PlanBOLStop{ID: uuid.New(), PlanBOLID: plan.ID, Sequence: 1}
+	repo := &stubBOLRepo{bol: plan, stops: []*models.PlanBOLStop{existingStop}, createStopErr: errNotFound}
+	h := newPlanBOLHandler(&stubPlanBOLSvc{}, repo, &stubLogisticsClient{})
+	req := withIDParam(httptest.NewRequest(http.MethodPost, "/", nil), plan.ID.String())
+	rec := httptest.NewRecorder()
+	h.AddReturnDepot(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
+func TestPlanBOL_Commit_SetTransactionIDError_Returns500(t *testing.T) {
+	plan := bolWithStatus(models.PlanBOLStatusPlanProgress)
+	repo := &stubBOLRepo{bol: plan, setTransactionIDErr: errNotFound}
+	lc := &stubLogisticsClient{txID: "TX-001"}
+	h := newPlanBOLHandler(&stubPlanBOLSvc{}, repo, lc)
+	body := map[string]any{"customer_first_name": "Jane", "customer_last_name": "Doe", "city": "Chicago", "state": "IL"}
+	req := withIDParam(httptest.NewRequest(http.MethodPost, "/", postBody(t, body)), plan.ID.String())
+	rec := httptest.NewRecorder()
+	h.Commit(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
+func TestPlanBOL_Commit_UpdateStatusError_Returns500(t *testing.T) {
+	plan := bolWithStatus(models.PlanBOLStatusPlanProgress)
+	repo := &stubBOLRepo{bol: plan, updateStatusErr: errNotFound}
+	lc := &stubLogisticsClient{txID: "TX-001"}
+	h := newPlanBOLHandler(&stubPlanBOLSvc{}, repo, lc)
+	body := map[string]any{"customer_first_name": "Jane", "customer_last_name": "Doe", "city": "Chicago", "state": "IL"}
+	req := withIDParam(httptest.NewRequest(http.MethodPost, "/", postBody(t, body)), plan.ID.String())
+	rec := httptest.NewRecorder()
+	h.Commit(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
+func TestPlanBOL_Get_StopsError_Returns500(t *testing.T) {
+	plan := bolWithStatus(models.PlanBOLStatusDraft)
+	h := newPlanBOLHandler(&stubPlanBOLSvc{}, &stubBOLRepo{bol: plan, stopsErr: errNotFound}, &stubLogisticsClient{})
+	req := withIDParam(httptest.NewRequest(http.MethodGet, "/", nil), plan.ID.String())
+	rec := httptest.NewRecorder()
+	h.Get(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
 // --- buildLineEntries ---
 
 func TestBuildLineEntries_MixedStops(t *testing.T) {

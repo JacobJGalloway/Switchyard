@@ -17,7 +17,11 @@ import (
 // --- minimal stubs ---
 
 type stubAssignRepo struct {
-	assignment *models.DriverBOLAssignment
+	assignment        *models.DriverBOLAssignment
+	createErr         error
+	markDepartedErr   error
+	markFulfilledErr  error
+	confirmDeadheadErr error
 }
 
 func (r *stubAssignRepo) GetAllActive(_ context.Context) ([]*models.DriverBOLAssignment, error) {
@@ -29,7 +33,9 @@ func (r *stubAssignRepo) GetByID(_ context.Context, _ uuid.UUID) (*models.Driver
 	}
 	return r.assignment, nil
 }
-func (r *stubAssignRepo) Create(_ context.Context, _ *models.DriverBOLAssignment) error { return nil }
+func (r *stubAssignRepo) Create(_ context.Context, _ *models.DriverBOLAssignment) error {
+	return r.createErr
+}
 func (r *stubAssignRepo) GetByPlanBOL(_ context.Context, _ uuid.UUID) (*models.DriverBOLAssignment, error) {
 	return nil, nil
 }
@@ -37,13 +43,13 @@ func (r *stubAssignRepo) GetActiveByDriver(_ context.Context, _ uuid.UUID) (*mod
 	return nil, nil
 }
 func (r *stubAssignRepo) MarkDeparted(_ context.Context, _ uuid.UUID, _ time.Time) error {
-	return nil
+	return r.markDepartedErr
 }
 func (r *stubAssignRepo) MarkFulfilled(_ context.Context, _ uuid.UUID, _ time.Time) error {
-	return nil
+	return r.markFulfilledErr
 }
 func (r *stubAssignRepo) ConfirmDeadhead(_ context.Context, _ uuid.UUID, _ time.Time) error {
-	return nil
+	return r.confirmDeadheadErr
 }
 
 type stubDriverRepo struct {
@@ -66,10 +72,16 @@ func (r *stubDriverRepo) Create(_ context.Context, _ *models.Driver) error { ret
 func (r *stubDriverRepo) Update(_ context.Context, _ *models.Driver) error { return nil }
 
 type stubBOLRepo struct {
-	bol     *models.PlanBOLRecord
-	stop    *models.PlanBOLStop
-	stopErr error
-	stops   []*models.PlanBOLStop
+	bol                   *models.PlanBOLRecord
+	stop                  *models.PlanBOLStop
+	stopErr               error
+	stops                 []*models.PlanBOLStop
+	stopsErr              error
+	updateStatusErr       error
+	createStopErr         error
+	markStopErr           error
+	statusHistoryErr      error
+	setTransactionIDErr   error
 }
 
 func (r *stubBOLRepo) Create(_ context.Context, _ *models.PlanBOLRecord) error { return nil }
@@ -83,14 +95,16 @@ func (r *stubBOLRepo) GetByStatus(_ context.Context, _ models.PlanBOLStatus) ([]
 	return nil, nil
 }
 func (r *stubBOLRepo) UpdateStatus(_ context.Context, _ uuid.UUID, _ models.PlanBOLStatus) error {
-	return nil
+	return r.updateStatusErr
 }
 func (r *stubBOLRepo) SetSubmittedTransactionID(_ context.Context, _ uuid.UUID, _ string) error {
-	return nil
+	return r.setTransactionIDErr
 }
-func (r *stubBOLRepo) CreateStop(_ context.Context, _ *models.PlanBOLStop) error { return nil }
+func (r *stubBOLRepo) CreateStop(_ context.Context, _ *models.PlanBOLStop) error {
+	return r.createStopErr
+}
 func (r *stubBOLRepo) GetStops(_ context.Context, _ uuid.UUID) ([]*models.PlanBOLStop, error) {
-	return r.stops, nil
+	return r.stops, r.stopsErr
 }
 func (r *stubBOLRepo) GetStopByID(_ context.Context, _ uuid.UUID) (*models.PlanBOLStop, error) {
 	if r.stopErr != nil {
@@ -99,7 +113,7 @@ func (r *stubBOLRepo) GetStopByID(_ context.Context, _ uuid.UUID) (*models.PlanB
 	return r.stop, nil
 }
 func (r *stubBOLRepo) MarkStopProcessed(_ context.Context, _ uuid.UUID, _ time.Time, _ *float64) error {
-	return nil
+	return r.markStopErr
 }
 func (r *stubBOLRepo) SetMilesDriven(_ context.Context, _ uuid.UUID, _ float64) error { return nil }
 func (r *stubBOLRepo) CreateSnapshot(_ context.Context, _ *models.TruckInventorySnapshot) error {
@@ -109,10 +123,13 @@ func (r *stubBOLRepo) GetSnapshots(_ context.Context, _ uuid.UUID) ([]*models.Tr
 	return nil, nil
 }
 func (r *stubBOLRepo) GetStatusHistory(_ context.Context, _ uuid.UUID) ([]*models.BOLStatusHistory, error) {
-	return nil, nil
+	return nil, r.statusHistoryErr
 }
 
-type stubAssignEquipRepo struct{ equipment *models.Equipment }
+type stubAssignEquipRepo struct {
+	equipment       *models.Equipment
+	updateStatusErr error
+}
 
 func (r *stubAssignEquipRepo) GetAll(_ context.Context) ([]*models.Equipment, error) { return nil, nil }
 func (r *stubAssignEquipRepo) GetByID(_ context.Context, _ uuid.UUID) (*models.Equipment, error) {
@@ -123,7 +140,7 @@ func (r *stubAssignEquipRepo) GetByID(_ context.Context, _ uuid.UUID) (*models.E
 }
 func (r *stubAssignEquipRepo) Create(_ context.Context, _ *models.Equipment) error { return nil }
 func (r *stubAssignEquipRepo) UpdateStatus(_ context.Context, _ uuid.UUID, _ models.EquipmentStatus) error {
-	return nil
+	return r.updateStatusErr
 }
 func (r *stubAssignEquipRepo) CreateMaintenanceRecord(_ context.Context, _ *models.MaintenanceRecord) error {
 	return nil
@@ -472,4 +489,78 @@ func TestAssignmentConfirmDeadhead_Success_Returns204(t *testing.T) {
 	rec := httptest.NewRecorder()
 	h.ConfirmDeadhead(rec, req)
 	assert.Equal(t, http.StatusNoContent, rec.Code)
+}
+
+func TestAssignmentConfirmDeadhead_RepoError_Returns500(t *testing.T) {
+	fulfilledAt := time.Now().Add(-1 * time.Hour)
+	assign := &models.DriverBOLAssignment{ID: uuid.New(), PlanBOLID: uuid.New(), FulfilledAt: &fulfilledAt}
+	h := newAssignHandler(&stubAssignRepo{assignment: assign, confirmDeadheadErr: errNotFound}, &stubDriverRepo{}, &stubBOLRepo{}, &stubAssignEquipRepo{}, &stubHOSSvc{})
+	req := withIDParam(httptest.NewRequest(http.MethodPatch, "/", nil), assign.ID.String())
+	rec := httptest.NewRecorder()
+	h.ConfirmDeadhead(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
+func TestAssignmentCreate_RepoError_Returns500(t *testing.T) {
+	bol := &models.PlanBOLRecord{ID: uuid.New(), Status: models.PlanBOLStatusValidated}
+	equip := &models.Equipment{ID: uuid.New(), Status: models.EquipmentStatusAvailable}
+	h := newAssignHandler(&stubAssignRepo{createErr: errNotFound}, &stubDriverRepo{}, &stubBOLRepo{bol: bol}, &stubAssignEquipRepo{equipment: equip}, &stubHOSSvc{})
+	body := map[string]any{
+		"driver_id": uuid.New().String(), "plan_bol_id": bol.ID.String(),
+		"equipment_id": equip.ID.String(), "state_code": "IL", "cycle_label": "60h/7d",
+	}
+	req := httptest.NewRequest(http.MethodPost, "/api/assignment", postBody(t, body))
+	rec := httptest.NewRecorder()
+	h.Create(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
+func TestAssignmentCreate_EquipStatusError_Returns500(t *testing.T) {
+	bol := &models.PlanBOLRecord{ID: uuid.New(), Status: models.PlanBOLStatusValidated}
+	equip := &models.Equipment{ID: uuid.New(), Status: models.EquipmentStatusAvailable}
+	h := newAssignHandler(&stubAssignRepo{}, &stubDriverRepo{}, &stubBOLRepo{bol: bol}, &stubAssignEquipRepo{equipment: equip, updateStatusErr: errNotFound}, &stubHOSSvc{})
+	body := map[string]any{
+		"driver_id": uuid.New().String(), "plan_bol_id": bol.ID.String(),
+		"equipment_id": equip.ID.String(), "state_code": "IL", "cycle_label": "60h/7d",
+	}
+	req := httptest.NewRequest(http.MethodPost, "/api/assignment", postBody(t, body))
+	rec := httptest.NewRecorder()
+	h.Create(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
+func TestAssignmentDepart_MarkDepartedError_Returns500(t *testing.T) {
+	assign := &models.DriverBOLAssignment{ID: uuid.New(), PlanBOLID: uuid.New()}
+	h := newAssignHandler(&stubAssignRepo{assignment: assign, markDepartedErr: errNotFound}, &stubDriverRepo{}, &stubBOLRepo{}, &stubAssignEquipRepo{}, &stubHOSSvc{})
+	req := withIDParam(httptest.NewRequest(http.MethodPatch, "/", nil), assign.ID.String())
+	rec := httptest.NewRecorder()
+	h.Depart(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
+func TestAssignmentDepart_UpdateBOLStatusError_Returns500(t *testing.T) {
+	assign := &models.DriverBOLAssignment{ID: uuid.New(), PlanBOLID: uuid.New()}
+	h := newAssignHandler(&stubAssignRepo{assignment: assign}, &stubDriverRepo{}, &stubBOLRepo{updateStatusErr: errNotFound}, &stubAssignEquipRepo{}, &stubHOSSvc{})
+	req := withIDParam(httptest.NewRequest(http.MethodPatch, "/", nil), assign.ID.String())
+	rec := httptest.NewRecorder()
+	h.Depart(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
+func TestAssignmentFulfill_MarkFulfilledError_Returns500(t *testing.T) {
+	assign := &models.DriverBOLAssignment{ID: uuid.New(), PlanBOLID: uuid.New()}
+	h := newAssignHandler(&stubAssignRepo{assignment: assign, markFulfilledErr: errNotFound}, &stubDriverRepo{}, &stubBOLRepo{}, &stubAssignEquipRepo{}, &stubHOSSvc{})
+	req := withIDParam(httptest.NewRequest(http.MethodPatch, "/", nil), assign.ID.String())
+	rec := httptest.NewRecorder()
+	h.Fulfill(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
+func TestAssignmentFulfill_UpdateBOLStatusError_Returns500(t *testing.T) {
+	assign := &models.DriverBOLAssignment{ID: uuid.New(), PlanBOLID: uuid.New()}
+	h := newAssignHandler(&stubAssignRepo{assignment: assign}, &stubDriverRepo{}, &stubBOLRepo{updateStatusErr: errNotFound}, &stubAssignEquipRepo{}, &stubHOSSvc{})
+	req := withIDParam(httptest.NewRequest(http.MethodPatch, "/", nil), assign.ID.String())
+	rec := httptest.NewRecorder()
+	h.Fulfill(rec, req)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
 }
