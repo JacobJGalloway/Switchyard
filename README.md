@@ -38,34 +38,13 @@ Switchyard is an inventory, driver, and equipment tracking and management system
 
 **Go `.env` loading — known gotcha:** Viper does not auto-load `.env` files. Before running the Go backend, source your `.env` from `Switchyard-Go/` using the one-liner in `Switchyard-Go/README.md`, or set the vars directly in your shell session.
 
-## Running the System
-
-```bash
-# APIs (run each in a separate terminal)
-dotnet run --project Switchyard.InventoryAPI
-dotnet run --project Switchyard.LogisticsAPI
-
-# Go support services — start Postgres first
-# First time: docker run -d --name switchyard-pg -e POSTGRES_PASSWORD=password -e POSTGRES_DB=switchyard -p 5433:5432 postgres:16
-docker start switchyard-pg
-cd Switchyard-Go
-Get-Content .env | Where-Object { $_ -notmatch '^\s*#' -and $_ -match '=' } | ForEach-Object { $k,$v = $_ -split '=',2; Set-Item "Env:$($k.Trim())" $v.Trim() }
-go run ./cmd/main.go
-
-# UI
-cd Switchyard.UI
-npm run dev
-
-# Unit Tests
-dotnet test
-go test ./...
-
-# API docs (Scalar UI — while API is running)
-# Inventory: https://localhost:7000/scalar/v1
-# Logistics: https://localhost:7001/scalar/v1
-```
-
 ## Architecture
+
+### Agentic AI Development
+
+Switchyard was built with [Claude Code](https://claude.ai/code) as an active pair programming and mentoring partner throughout every sprint. The model always knew the answer — but frequently chose not to give it directly. Instead it would surface the right question, flag the constraint that hadn't been named yet, or ask what the invariant was before suggesting the fix. The design emerged from understanding, not from prescription.
+
+That dynamic shaped the architecture as much as the implementation. The CUD authority boundary between Go and .NET, the service-layer transport agnosticism, and the CQRS read-replica pattern were all reasoned out through guided back-and-forth rather than handed down as decisions. The goal was to own every piece of it — not just ship it.
 
 ### CQRS Read Replica
 Both .NET APIs maintain a read replica synced asynchronously after every write:
@@ -147,6 +126,33 @@ Both APIs use Auth0 JWT bearer authentication. Permissions are claim-based:
     "InventoryRead": "Host=localhost;Port=5433;Database=switchyard_inventory_read;Username=postgres;Password=password"
   }
 }
+```
+
+## Running the System
+
+```bash
+# APIs (run each in a separate terminal)
+dotnet run --project Switchyard.InventoryAPI
+dotnet run --project Switchyard.LogisticsAPI
+
+# Go support services — start Postgres first
+# First time: docker run -d --name switchyard-pg -e POSTGRES_PASSWORD=password -e POSTGRES_DB=switchyard -p 5433:5432 postgres:16
+docker start switchyard-pg
+cd Switchyard-Go
+Get-Content .env | Where-Object { $_ -notmatch '^\s*#' -and $_ -match '=' } | ForEach-Object { $k,$v = $_ -split '=',2; Set-Item "Env:$($k.Trim())" $v.Trim() }
+go run ./cmd/main.go
+
+# UI
+cd Switchyard.UI
+npm run dev
+
+# Unit Tests
+dotnet test
+go test ./...
+
+# API docs (Scalar UI — while API is running)
+# Inventory: https://localhost:7000/scalar/v1
+# Logistics: https://localhost:7001/scalar/v1
 ```
 
 ## Wanted Features
