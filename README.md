@@ -162,10 +162,12 @@ go test ./...
 - [ ] Demo reset / reseed script — date-relative seed so the board always looks like a live operational day at demo time
 - [ ] Two-company demo seed — Company A (Monday morning, default brand) and Company B (mid-week complexity, client palette override)
 - [ ] Dispatch board dark mode nuance rework + favicon swap
-- [ ] ARIA compliance audit — board columns, cards, icon-only buttons, skip-nav
-- [ ] Color contrast audit (WCAG AA) — verify all text/bg combinations across light and dark themes
+- [ ] SKU unit price — extend inventory model to hold unit price; foundation for analytics such as revenue vs. profit charts and other displays
+
+### v1.4 Wanted Features - Demo Stable Hardening / pilot-client ready; order flexible relative to v1.3 completion
 - [ ] Rolling refresh tokens for Auth0 sessions in place of fixed-expiry client secrets
-- [ ] SKU unit price — extend inventory model to hold unit price; enables revenue vs. profit analytics
+- [ ] Color contrast audit (WCAG AA) — verify all text/bg combinations across light and dark themes
+- [ ] ARIA compliance audit — board columns, cards, icon-only buttons, skip-nav
 
 ### Backlog
 - [ ] Read replica health endpoint — expose sync lag and InSync status
