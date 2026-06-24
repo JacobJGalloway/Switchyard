@@ -1,9 +1,0 @@
--- database: ../WarehouseData.db3
-
-CREATE TABLE IF NOT EXISTS SKUCatalog (
-    SKUMarker      TEXT NOT NULL UNIQUE PRIMARY KEY,
-    Category       TEXT NOT NULL DEFAULT '',
-    Type           TEXT NOT NULL DEFAULT '',
-    Color          TEXT NOT NULL DEFAULT '',
-    Size           REAL NOT NULL DEFAULT 0.0
-);

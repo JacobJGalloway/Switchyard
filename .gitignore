@@ -22,10 +22,10 @@ dist/
 .env.local
 .env.*.local
 
-# SQLite read replicas (generated on startup)
-*Read.db3
-*Read.db3-shm
-*Read.db3-wal
+# SQLite databases (superseded by PostgreSQL)
+*.db3
+*.db3-shm
+*.db3-wal
 
 # Go
 coverage.out

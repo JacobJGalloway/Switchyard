@@ -1,8 +1,9 @@
--- database: ../WarehouseData.db3
+﻿-- database: switchyard_inventory
 
-PRAGMA foreign_keys = ON;
+ALTER TABLE "Tools" ALTER COLUMN "LocationId" SET DEFAULT '';
+ALTER TABLE "Tools" ALTER COLUMN "Projected" SET DEFAULT true;
 
-INSERT OR IGNORE INTO Tools (PartitionKey, RowKey, SKUMarker, UnloadedDate) VALUES
+INSERT INTO "Tools" ("PartitionKey", "RowKey", "SKUMarker", "UnloadedDate") VALUES
 -- PWTL001 x30 (WH001)
 ('WH001-PWTL001-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6', 'PWTL001', 'PWTL001', '2025-01-10T08:00:00Z'),
 ('WH001-PWTL001-00000000000000000000000000000001', 'PWTL001', 'PWTL001', '2025-01-10T08:00:00Z'),
@@ -779,5 +780,8 @@ INSERT OR IGNORE INTO Tools (PartitionKey, RowKey, SKUMarker, UnloadedDate) VALU
 ('WH003-PWTL025-0000000000000000000000000000001c', 'PWTL025', 'PWTL025', '2025-04-02T09:00:00Z'),
 ('WH003-PWTL025-0000000000000000000000000000001d', 'PWTL025', 'PWTL025', '2025-04-02T09:00:00Z');
 
--- Set LocationId from PartitionKey prefix and mark all seed records as confirmed inventory
-UPDATE Tools SET LocationId = SUBSTR(PartitionKey, 1, 5), Projected = 0 WHERE LocationId = '';
+-- Backfill LocationId from PartitionKey prefix and mark all seed records as confirmed inventory
+UPDATE "Tools" SET "LocationId" = SUBSTR("PartitionKey", 1, 5), "Projected" = false WHERE "LocationId" = '';
+
+ALTER TABLE "Tools" ALTER COLUMN "LocationId" DROP DEFAULT;
+ALTER TABLE "Tools" ALTER COLUMN "Projected" DROP DEFAULT;

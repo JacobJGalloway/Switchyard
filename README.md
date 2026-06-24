@@ -168,6 +168,8 @@ go test ./...
 - [ ] Rolling refresh tokens for Auth0 sessions in place of fixed-expiry client secrets
 - [ ] Color contrast audit (WCAG AA) — verify all text/bg combinations across light and dark themes
 - [ ] ARIA compliance audit — board columns, cards, icon-only buttons, skip-nav
+- [ ] Document dispatch board card border language in a design note — border present = status alert (danger/warn/ok variants); no border = clean/good status. Borders carry semantic weight and should not be used decoratively.
+- [ ] CQRS read replica hardening — provision real Postgres read replicas for `switchyard_inventory` and `switchyard_logistics`; dev currently points read connections at the write database as a stand-in.
 
 ### Backlog
 - [ ] Read replica health endpoint — expose sync lag and InSync status

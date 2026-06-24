@@ -1,8 +1,9 @@
--- database: database: ../WarehouseData.db3
+﻿-- database: switchyard_inventory
 
-PRAGMA foreign_keys = ON;
+ALTER TABLE "PPE" ALTER COLUMN "LocationId" SET DEFAULT '';
+ALTER TABLE "PPE" ALTER COLUMN "Projected" SET DEFAULT true;
 
-INSERT OR IGNORE INTO PPE (PartitionKey, RowKey, SKUMarker, UnloadedDate) VALUES
+INSERT INTO "PPE" ("PartitionKey", "RowKey", "SKUMarker", "UnloadedDate") VALUES
 -- SPPE001 x30 (WH001)
 ('WH001-SPPE001-a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6', 'SPPE001', 'SPPE001', '2025-01-10T08:00:00Z'),
 ('WH001-SPPE001-00000000000000000000000000000001', 'SPPE001', 'SPPE001', '2025-01-10T08:00:00Z'),
@@ -779,5 +780,8 @@ INSERT OR IGNORE INTO PPE (PartitionKey, RowKey, SKUMarker, UnloadedDate) VALUES
 ('WH003-SPPE025-0000000000000000000000000000001c', 'SPPE025', 'SPPE025', '2025-04-02T09:00:00Z'),
 ('WH003-SPPE025-0000000000000000000000000000001d', 'SPPE025', 'SPPE025', '2025-04-02T09:00:00Z');
 
--- Set LocationId from PartitionKey prefix and mark all seed records as confirmed inventory
-UPDATE PPE SET LocationId = SUBSTR(PartitionKey, 1, 5), Projected = 0 WHERE LocationId = '';
+-- Backfill LocationId from PartitionKey prefix and mark all seed records as confirmed inventory
+UPDATE "PPE" SET "LocationId" = SUBSTR("PartitionKey", 1, 5), "Projected" = false WHERE "LocationId" = '';
+
+ALTER TABLE "PPE" ALTER COLUMN "LocationId" DROP DEFAULT;
+ALTER TABLE "PPE" ALTER COLUMN "Projected" DROP DEFAULT;
