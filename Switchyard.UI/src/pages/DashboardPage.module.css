@@ -1,0 +1,13 @@
+.page {
+  padding: 2rem 1.5rem;
+  text-align: left;
+}
+
+.greeting {
+  margin-top: 0;
+}
+
+.coming {
+  color: var(--text);
+  font-size: 15px;
+}

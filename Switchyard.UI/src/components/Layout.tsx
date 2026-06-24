@@ -6,7 +6,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <>
       <Header />
       <NavMenu />
-      <hr style={{ margin: 0, border: 'none', borderTop: '2px solid var(--text-h)' }} />
       {children}
     </>
   )
