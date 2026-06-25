@@ -7,7 +7,7 @@ namespace Switchyard.InventoryAPI.Controllers
 {
     [Authorize]
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/tools")]
     public class ToolController(IToolService toolService) : ControllerBase
     {
         private readonly IToolService _toolService = toolService;

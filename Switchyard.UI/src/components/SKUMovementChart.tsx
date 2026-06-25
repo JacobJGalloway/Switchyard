@@ -32,8 +32,8 @@ export default function SKUMovementChart() {
   useEffect(() => {
     async function load() {
       const [mov, cat, wh] = await Promise.all([
-        logistics.get<SKUMovementRow[]>('/api/analytics/sku-movement?days=30'),
-        inventory.get<SKUCatalogItem[]>('/api/skucatalog'),
+        logistics.get<SKUMovementRow[]>('/api/analytics/sku-movement?days=14'),
+        inventory.get<SKUCatalogItem[]>('/api/sku-catalog'),
         logistics.get<Warehouse[]>('/api/warehouses'),
       ])
       setMovement(mov)
@@ -67,8 +67,9 @@ export default function SKUMovementChart() {
     const whParam = selectedWarehouses.length > 0
       ? `&warehouses=${selectedWarehouses.join(',')}`
       : ''
-    logistics.get<SKUMovementRow[]>(`/api/analytics/sku-movement?days=30${whParam}`)
+    logistics.get<SKUMovementRow[]>(`/api/analytics/sku-movement?days=14${whParam}`)
       .then(setMovement)
+      .catch(err => console.warn('[SKUMovementChart] warehouse re-fetch failed:', err))
   }, [selectedWarehouses])
 
   // Build chart data: one entry per date, value per SKU as keys
@@ -102,7 +103,7 @@ export default function SKUMovementChart() {
   return (
     <div className={styles.widget}>
       <div className={styles.header}>
-        <h2 className={styles.title}>SKU Value Moved — Last 30 Days</h2>
+        <h2 className={styles.title}>SKU Value Moved — Last 14 Days</h2>
       </div>
 
       <div className={styles.filters}>

@@ -17,7 +17,7 @@ export default function BillsOfLadingPage() {
   const [modalLoading, setModalLoading] = useState(false)
 
   useEffect(() => {
-    logistics.get<BillOfLading[]>('/api/BillOfLading')
+    logistics.get<BillOfLading[]>('/api/bills-of-lading')
       .then(setBols)
       .catch(() => setError('Failed to load bills of lading.'))
       .finally(() => setLoading(false))
@@ -27,7 +27,7 @@ export default function BillsOfLadingPage() {
     setModalLoading(true)
     setModal({ transactionId, entries: [] })
     try {
-      const entries = await logistics.get<LineEntry[]>(`/api/BillOfLading/${transactionId}/line-entry`)
+      const entries = await logistics.get<LineEntry[]>(`/api/bills-of-lading/${transactionId}/line-entry`)
       setModal({ transactionId, entries })
     } catch {
       setModal({ transactionId, entries: [] })

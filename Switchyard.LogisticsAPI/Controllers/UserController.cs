@@ -9,7 +9,7 @@ namespace Switchyard.LogisticsAPI.Controllers
     //       move this controller to that project.
     [Authorize]
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/users")]
     public class UserController(IUserManagementService userManagementService) : ControllerBase
     {
         private readonly IUserManagementService _userManagementService = userManagementService;

@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-// CreateBOLRequest is the payload sent to POST /api/BillOfLading on the
+// CreateBOLRequest is the payload sent to POST /api/bills-of-lading on the
 // Switchyard .NET Logistics API. CustomerFirstName/LastName/City/State come
 // from store master data — the service layer must look up the destination
 // store before calling CreateBOL.
@@ -72,7 +72,7 @@ func (c *HTTPLogisticsClient) CreateBOL(ctx context.Context, req *CreateBOLReque
 	}
 
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost,
-		c.baseURL+"/api/BillOfLading", bytes.NewReader(body))
+		c.baseURL+"/api/bills-of-lading", bytes.NewReader(body))
 	if err != nil {
 		return "", err
 	}
@@ -97,7 +97,7 @@ func (c *HTTPLogisticsClient) CreateBOL(ctx context.Context, req *CreateBOLReque
 }
 
 func (c *HTTPLogisticsClient) ProcessStop(ctx context.Context, transactionID, locationID string) error {
-	url := fmt.Sprintf("%s/api/BillOfLading/%s/process/%s", c.baseURL, transactionID, locationID)
+	url := fmt.Sprintf("%s/api/bills-of-lading/%s/process/%s", c.baseURL, transactionID, locationID)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, nil)
 	if err != nil {
@@ -125,7 +125,7 @@ func (c *HTTPLogisticsClient) ReplaceStop(ctx context.Context, transactionID str
 		return fmt.Errorf("marshalling ReplaceStop request: %w", err)
 	}
 
-	url := fmt.Sprintf("%s/api/BillOfLading/%s/replace-stop", c.baseURL, transactionID)
+	url := fmt.Sprintf("%s/api/bills-of-lading/%s/replace-stop", c.baseURL, transactionID)
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
 		return err

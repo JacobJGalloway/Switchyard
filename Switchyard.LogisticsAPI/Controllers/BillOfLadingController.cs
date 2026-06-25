@@ -7,7 +7,7 @@ namespace Switchyard.LogisticsAPI.Controllers
 {
     [Authorize]
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/bills-of-lading")]
     public class BillOfLadingController(IBillOfLadingService billOfLadingService) : ControllerBase
     {
         private readonly IBillOfLadingService _billOfLadingService = billOfLadingService;

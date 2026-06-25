@@ -5,7 +5,7 @@ using Switchyard.InventoryAPI.Data;
 namespace Switchyard.InventoryAPI.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/sku-catalog")]
 public class SKUCatalogController(InventoryContext db) : ControllerBase
 {
     [HttpGet]

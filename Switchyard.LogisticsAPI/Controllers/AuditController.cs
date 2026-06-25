@@ -5,7 +5,7 @@ using Switchyard.LogisticsAPI.Data;
 namespace Switchyard.LogisticsAPI.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/audits")]
     public class AuditController(LogisticsContext writeCtx, LogisticsReadContext readCtx) : ControllerBase
     {
         /// <summary>Returns write vs read DB row counts per table, with an InSync flag for each.</summary>

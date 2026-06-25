@@ -87,7 +87,12 @@ type dotnetInventoryItem struct {
 }
 
 func (c *HTTPInventoryClient) fetchCategory(ctx context.Context, category, locationID string) ([]InventoryItem, error) {
-	url := fmt.Sprintf("%s/api/%s/location/%s", c.baseURL, category, locationID)
+	routes := map[string]string{"Clothing": "clothing", "PPE": "ppe", "Tool": "tools"}
+	route := routes[category]
+	if route == "" {
+		route = strings.ToLower(category)
+	}
+	url := fmt.Sprintf("%s/api/%s/location/%s", c.baseURL, route, locationID)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
