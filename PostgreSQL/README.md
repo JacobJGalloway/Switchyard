@@ -41,7 +41,7 @@ Run these against the indicated database:
 Foreign key constraints apply; parent tables must be seeded before dependents.
 
 **Step 1 — seed parent tables:**
-- `queries/Warehouses-Seed-Data.sql` → `switchyard_inventory`
+- `queries/Warehouses-Seed-Data.sql` → `switchyard_inventory` AND `switchyard_logistics`
 - `queries/SKUCatalog-Seed-Data.sql` → `switchyard_inventory`
 
 **Step 2 — seed dependent tables:**

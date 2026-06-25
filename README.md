@@ -135,9 +135,8 @@ Both APIs use Auth0 JWT bearer authentication. Permissions are claim-based:
 dotnet run --project Switchyard.InventoryAPI
 dotnet run --project Switchyard.LogisticsAPI
 
-# Go support services — start Postgres first
-# First time: docker run -d --name switchyard-pg -e POSTGRES_PASSWORD=password -e POSTGRES_DB=switchyard -p 5433:5432 postgres:16
-docker start switchyard-pg
+# Go support services — start Postgres first (docker-compose.yml at project root)
+docker compose up -d
 cd Switchyard-Go
 Get-Content .env | Where-Object { $_ -notmatch '^\s*#' -and $_ -match '=' } | ForEach-Object { $k,$v = $_ -split '=',2; Set-Item "Env:$($k.Trim())" $v.Trim() }
 go run ./cmd/main.go
@@ -159,10 +158,14 @@ go test ./...
 
 ### v1.3 — Next sprint
 - [ ] Mid-BOL transfer stops — `transfer` stop type; formal custody checkpoint for driver/equipment handoffs mid-route; requires `DriverBOLAssignment` restructuring
-- [ ] Demo reset / reseed script — date-relative seed so the board always looks like a live operational day at demo time
-- [ ] Two-company demo seed — Company A (Monday morning, default brand) and Company B (mid-week complexity, client palette override)
-- [ ] Dispatch board dark mode nuance rework + favicon swap
-- [ ] SKU unit price — extend inventory model to hold unit price; foundation for analytics such as revenue vs. profit charts and other displays
+- [~] Demo reset / reseed script — date-relative seed so the board always looks like a live operational day at demo time
+- [~] Two-company demo seed — Company A (Monday morning, default brand) and Company B (mid-week complexity, client palette override)
+- [X] Dispatch board dark mode nuance rework + favicon swap
+- [X] SKU unit price — extend inventory model to hold unit price; foundation for analytics such as revenue vs. profit charts and other displays
+- [X] SKU movement chart — warehouse filter, SKU filter, and chart dots all working; EF Core funcletizer bug bypassed by materializing before `Split()`
+- [X] Explicit routes on all controllers — plural kebab-case across all 10 controllers in both APIs; UI callers and Go integration clients updated to match
+- [X] Auth0 Google login — single-click through; `onRedirectCallback` + `isLoading` guard + `strictPort: true` in `vite.config.ts` to prevent port drift
+- [ ] Receive-delivery endpoint — flip `Projected = false` and set `LocationId` when a BOL stop is confirmed; currently missing, seed mimics it manually
 
 ### v1.4 Wanted Features - Demo Stable Hardening / pilot-client ready; order flexible relative to v1.3 completion
 - [ ] Rolling refresh tokens for Auth0 sessions in place of fixed-expiry client secrets

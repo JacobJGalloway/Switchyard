@@ -1,4 +1,5 @@
-﻿-- database: switchyard_inventory
+﻿-- database: switchyard_inventory AND switchyard_logistics
+-- Warehouses are read by both APIs; seed this file against both databases.
 
 INSERT INTO "Warehouses" ("WarehouseId", "City", "State") VALUES
 ('WH001', 'Chicago',       'IL'),
