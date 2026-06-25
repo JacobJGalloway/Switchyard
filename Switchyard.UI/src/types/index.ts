@@ -55,6 +55,21 @@ export interface AppUser {
   blocked: boolean
 }
 
+export interface SKUCatalogItem {
+  skuMarker: string
+  category: string
+  type: string
+  color: string
+  size: string
+  unitPrice: number
+}
+
+export interface SKUMovementRow {
+  date: string
+  skuMarker: string
+  quantityMoved: number
+}
+
 export interface CreateUserRequest {
   email: string
   password: string

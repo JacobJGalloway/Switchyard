@@ -8,5 +8,6 @@ public interface IBillOfLading
     string CustomerLastName { get; set; }
     string City { get; set; }
     string State { get; set; }
+    DateTime? CommittedDate { get; set; }
     List<LineEntry> LineEntries { get; set; }
 }

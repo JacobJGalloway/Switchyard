@@ -5,6 +5,6 @@ CREATE TABLE IF NOT EXISTS "SKUCatalog" (
     "Category"   TEXT    NOT NULL DEFAULT '',
     "Type"       TEXT    NOT NULL DEFAULT '',
     "Color"      TEXT    NOT NULL DEFAULT '',
-    "Size"       NUMERIC NOT NULL DEFAULT 0.0,
+    "Size"       TEXT    NOT NULL DEFAULT '',
     "UnitPrice"  NUMERIC NOT NULL DEFAULT 0.0
 );

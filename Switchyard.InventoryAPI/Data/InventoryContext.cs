@@ -10,12 +10,14 @@ namespace Switchyard.InventoryAPI.Data
         public DbSet<Clothing> Clothing => Set<Clothing>();
         public DbSet<PPE> PPE => Set<PPE>();
         public DbSet<Tool> Tool => Set<Tool>();
+        public DbSet<SKUCatalog> SKUCatalog => Set<SKUCatalog>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Clothing>().ToTable("Clothing").HasKey(c => c.PartitionKey);
             modelBuilder.Entity<PPE>().ToTable("PPE").HasKey(p => p.PartitionKey);
             modelBuilder.Entity<Tool>().ToTable("Tools").HasKey(t => t.PartitionKey);
+            modelBuilder.Entity<SKUCatalog>().ToTable("SKUCatalog", t => t.ExcludeFromMigrations()).HasKey(s => s.SKUMarker);
         }
 
         public async Task<List<Clothing>> GetClothingBySKUIdsync(string skuId)
