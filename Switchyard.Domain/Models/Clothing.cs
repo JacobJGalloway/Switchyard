@@ -9,7 +9,7 @@ public class Clothing : IItem
     public string LocationId { get; set; } = string.Empty;
     public required string SKUMarker { get; set; }
     public required DateTime UnloadedDate { get; set; }
-    public bool Projected { get; set; } = true;
+    public bool Projected { get; set; } = false;
     public decimal UnitPrice { get; set; }
     public string PriceCurrency { get; set; } = "USD";
     public DateTime? PriceEffectiveDate { get; set; }
