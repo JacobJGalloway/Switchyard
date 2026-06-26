@@ -158,8 +158,8 @@ go test ./...
 
 ### v1.3 — Next sprint
 - [ ] Mid-BOL transfer stops — `transfer` stop type; formal custody checkpoint for driver/equipment handoffs mid-route; requires `DriverBOLAssignment` restructuring
-- [~] Demo reset / reseed script — date-relative seed so the board always looks like a live operational day at demo time
-- [~] Two-company demo seed — Company A (Monday morning, default brand) and Company B (mid-week complexity, client palette override)
+- [X] Demo reset / reseed script — date-relative seed so the board always looks like a live operational day at demo time
+- [X] Two-company demo seed — Company A (Monday morning, default brand) and Company B (mid-week complexity, client palette override)
 - [X] Dispatch board dark mode nuance rework + favicon swap
 - [X] SKU unit price — extend inventory model to hold unit price; foundation for analytics such as revenue vs. profit charts and other displays
 - [X] SKU movement chart — warehouse filter, SKU filter, and chart dots all working; EF Core funcletizer bug bypassed by materializing before `Split()`
