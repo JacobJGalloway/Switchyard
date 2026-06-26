@@ -12,6 +12,7 @@ const (
 	StopTypeWarehouse   StopType = "warehouse"
 	StopTypeStore       StopType = "store"
 	StopTypeReturnDepot StopType = "return_depot"
+	StopTypeTransfer    StopType = "transfer"
 )
 
 type PlanBOLStatus string

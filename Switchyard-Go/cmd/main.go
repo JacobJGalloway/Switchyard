@@ -213,6 +213,8 @@ func main() {
 		r.Patch("/api/assignment/{id}/depart", assignmentHandler.Depart)
 		r.Patch("/api/assignment/{id}/fulfill", assignmentHandler.Fulfill)
 		r.Patch("/api/assignment/{id}/deadhead", assignmentHandler.ConfirmDeadhead)
+		r.Post("/api/plan-bol/{id}/transfer", assignmentHandler.Transfer)
+		r.Get("/api/plan-bol/{id}/assignments", assignmentHandler.GetCustodyChain)
 
 		// Equipment
 		r.Get("/api/equipment", equipmentHandler.GetAll)

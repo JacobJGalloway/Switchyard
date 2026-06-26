@@ -157,7 +157,7 @@ go test ./...
 ## Wanted Features
 
 ### v1.3 — Next sprint
-- [ ] Mid-BOL transfer stops — `transfer` stop type; formal custody checkpoint for driver/equipment handoffs mid-route; requires `DriverBOLAssignment` restructuring
+- [X] Mid-BOL transfer stops — `transfer` stop type; formal custody checkpoint for driver/equipment handoffs mid-route; requires `DriverBOLAssignment` restructuring
 - [X] Demo reset / reseed script — date-relative seed so the board always looks like a live operational day at demo time
 - [X] Two-company demo seed — Company A (Monday morning, default brand) and Company B (mid-week complexity, client palette override)
 - [X] Dispatch board dark mode nuance rework + favicon swap

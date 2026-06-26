@@ -51,6 +51,12 @@ func (r *stubAssignRepo) MarkFulfilled(_ context.Context, _ uuid.UUID, _ time.Ti
 func (r *stubAssignRepo) ConfirmDeadhead(_ context.Context, _ uuid.UUID, _ time.Time) error {
 	return r.confirmDeadheadErr
 }
+func (r *stubAssignRepo) GetCustodyChain(_ context.Context, _ uuid.UUID) ([]*models.DriverBOLAssignment, error) {
+	return nil, nil
+}
+func (r *stubAssignRepo) InitiateTransfer(_ context.Context, _ uuid.UUID, _ time.Time, _ uuid.UUID) error {
+	return nil
+}
 
 type stubDriverRepo struct {
 	driver    *models.Driver

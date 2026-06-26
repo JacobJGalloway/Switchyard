@@ -65,18 +65,21 @@ type LoadingReadyCard struct {
 
 // InDeliveryCard is the primary driver card while a run is active.
 // MandatedStopAt non-nil places the card in the Mandated Stop sub-section.
+// IsCustodyTransfer is true when this driver picked up the load at a transfer stop
+// rather than at the origin — used to render the custody handoff badge on the card.
 type InDeliveryCard struct {
-	Assignment     *models.DriverBOLAssignment
-	Driver         *models.Driver
-	PlanBOL        *models.PlanBOLRecord
-	Equipment      *models.Equipment
-	CurrentStop    *models.PlanBOLStop
-	HOSStatus      HOSStatus
-	HOSPillTone    string // "ok" | "warn" | "danger"
-	HOSPillLabel   string // "Healthy" | "Daily limit · 1h 30m" | "HOS limit"
-	HOSWindow      *models.HOSWindow
-	MandatedStopAt *time.Time
-	ELDStopRef     *string
+	Assignment        *models.DriverBOLAssignment
+	Driver            *models.Driver
+	PlanBOL           *models.PlanBOLRecord
+	Equipment         *models.Equipment
+	CurrentStop       *models.PlanBOLStop
+	HOSStatus         HOSStatus
+	HOSPillTone       string // "ok" | "warn" | "danger"
+	HOSPillLabel      string // "Healthy" | "Daily limit · 1h 30m" | "HOS limit"
+	HOSWindow         *models.HOSWindow
+	MandatedStopAt    *time.Time
+	ELDStopRef        *string
+	IsCustodyTransfer bool
 }
 
 // BreakdownCard represents a roadside equipment failure with load still attached.
@@ -95,8 +98,9 @@ type InDeliveryColumn struct {
 	Breakdown    []*BreakdownCard
 }
 
-// DeliveredCard appears after all stops are confirmed.
-// Displays the dead-head search window countdown.
+// DeliveredCard appears after all stops are confirmed or after a custody transfer.
+// IsTransferDeadhead is true when the driver handed off the load mid-route rather
+// than completing delivery — the deadhead window is anchored to TransferredAt in that case.
 type DeliveredCard struct {
 	Assignment              *models.DriverBOLAssignment
 	Driver                  *models.Driver
@@ -104,6 +108,7 @@ type DeliveredCard struct {
 	Equipment               *models.Equipment
 	DeadheadWindowExpiresAt time.Time
 	DeadheadWindowRemaining time.Duration
+	IsTransferDeadhead      bool
 }
 
 // --- Resource pool card types (right side of board) ---
@@ -241,7 +246,11 @@ func (s *WhiteboardService) GetBoardState(ctx context.Context) (*BoardState, err
 	activeDriverIDs := make(map[uuid.UUID]bool, len(activeAssignments))
 
 	for _, a := range activeAssignments {
-		assignedBOLs[a.PlanBOLID] = a
+		// Transferred assignments no longer own the BOL for board placement —
+		// the incoming driver's assignment is the current owner.
+		if a.TransferredAt == nil {
+			assignedBOLs[a.PlanBOLID] = a
+		}
 		activeDriverIDs[a.DriverID] = true
 
 		if a.DepartedAt == nil {
@@ -263,19 +272,33 @@ func (s *WhiteboardService) GetBoardState(ctx context.Context) (*BoardState, err
 		}
 
 		switch {
+		case a.TransferredAt != nil:
+			// Outgoing driver completed their segment via handoff; now doing transfer deadhead.
+			expiresAt := a.TransferredAt.Add(s.deadheadSearchWindow)
+			board.Delivered = append(board.Delivered, &DeliveredCard{
+				Assignment:              a,
+				Driver:                  driver,
+				PlanBOL:                 bol,
+				Equipment:               equip,
+				DeadheadWindowExpiresAt: expiresAt,
+				DeadheadWindowRemaining: time.Until(expiresAt),
+				IsTransferDeadhead:      true,
+			})
+
 		case a.FulfilledAt == nil:
 			hosWindow, _ := s.hosRepo.GetWindowByDriver(ctx, a.DriverID)
 			hosStatus, pillTone, pillLabel := s.hosStateForWindow(ctx, hosWindow, driver.LicenseState)
 			card := &InDeliveryCard{
-				Assignment:   a,
-				Driver:       driver,
-				PlanBOL:      bol,
-				Equipment:    equip,
-				CurrentStop:  s.firstUnprocessedStop(ctx, a.PlanBOLID),
-				HOSStatus:    hosStatus,
-				HOSPillTone:  pillTone,
-				HOSPillLabel: pillLabel,
-				HOSWindow:    hosWindow,
+				Assignment:        a,
+				Driver:            driver,
+				PlanBOL:           bol,
+				Equipment:         equip,
+				CurrentStop:       s.firstUnprocessedStop(ctx, a.PlanBOLID),
+				HOSStatus:         hosStatus,
+				HOSPillTone:       pillTone,
+				HOSPillLabel:      pillLabel,
+				HOSWindow:         hosWindow,
+				IsCustodyTransfer: a.SegmentStartStopID != nil,
 			}
 			if hosWindow != nil && hosWindow.MandatedStopAt != nil {
 				card.MandatedStopAt = hosWindow.MandatedStopAt
