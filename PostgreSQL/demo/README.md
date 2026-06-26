@@ -41,10 +41,20 @@ All drivers have fresh HOS (start of week). Two trailers are at the loading dock
 
 **VITE_CLIENT:** `digital-parts`
 
-**Login:** Digital Parts demo account
-> **TODO:** Add the Digital Parts Auth0 demo user credentials here.
-> Create a dedicated Auth0 test user with the Digital Parts tenant/audience,
-> or use the M2M token approach if logging in via a service account.
+**Login:** Digital Parts demo account (username/password — not Google)
+
+Create this user once via the Switchyard Users page (while logged in as yourself with
+`VITE_CLIENT=switchyard`), then record the credentials below:
+
+| Field | Value |
+|-------|-------|
+| Email | *(fill in after creation)* |
+| Password | *(fill in after creation)* |
+| Role | Admin |
+| Warehouse | WH001 (or unassigned) |
+
+The company brand is controlled entirely by `VITE_CLIENT` — no Auth0 company metadata
+is needed. Any username/password user with an Admin role works as the Digital Parts demo login.
 
 **Board state:**
 | Column | Cards |
