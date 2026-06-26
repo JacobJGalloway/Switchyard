@@ -165,7 +165,7 @@ go test ./...
 - [X] SKU movement chart — warehouse filter, SKU filter, and chart dots all working; EF Core funcletizer bug bypassed by materializing before `Split()`
 - [X] Explicit routes on all controllers — plural kebab-case across all 10 controllers in both APIs; UI callers and Go integration clients updated to match
 - [X] Auth0 Google login — single-click through; `onRedirectCallback` + `isLoading` guard + `strictPort: true` in `vite.config.ts` to prevent port drift
-- [ ] Receive-delivery endpoint — flip `Projected = false` and set `LocationId` when a BOL stop is confirmed; currently missing, seed mimics it manually
+- [X] Receive-delivery endpoint — flip `Projected = false` and set `LocationId` when a BOL stop is confirmed; currently missing, seed mimics it manually
 
 ### v1.4 Wanted Features - Demo Stable Hardening / pilot-client ready; order flexible relative to v1.3 completion
 - [ ] Rolling refresh tokens for Auth0 sessions in place of fixed-expiry client secrets

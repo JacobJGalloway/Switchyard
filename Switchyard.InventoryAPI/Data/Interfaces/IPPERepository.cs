@@ -11,6 +11,7 @@ namespace Switchyard.InventoryAPI.Data.Interfaces
         Task<PPE> AddAsync(PPE item);
         Task UpdateBySKUIdAsync(string skuId, PPE item);
         Task PatchAsync(string partitionKey, bool? projected, DateTime? unloadedDate);
+        Task ReceiveDeliveryAsync(string skuMarker, int quantity, string locationId);
         Task<bool> DeleteBySKUIdAsync(string skuId);
         Task<bool> DeleteByPartitionKeyAsync(string partitionKey);
     }
