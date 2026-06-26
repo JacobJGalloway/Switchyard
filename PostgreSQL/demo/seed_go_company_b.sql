@@ -76,22 +76,22 @@ INSERT INTO equipment (id, unit_id, equipment_type, home_warehouse_id, status) V
 
 -- ── Maintenance Records ───────────────────────────────────────────────────────
 INSERT INTO maintenance_record (id, equipment_id, description, scheduled_at, estimated_return) VALUES
-  ('m1000000-0000-0000-0000-000000000001',
+  ('f1000000-0000-0000-0000-000000000001',
    'c1000000-0000-0000-0000-000000000002',
    'Scheduled 60k mile service — oil, filters, brake inspection',
    NOW() - INTERVAL '6 hours',
    NOW() + INTERVAL '2 days'),
-  ('m1000000-0000-0000-0000-000000000002',
+  ('f1000000-0000-0000-0000-000000000002',
    'c1000000-0000-0000-0000-000000000003',
    'Scheduled 60k mile service — oil, filters, tire rotation',
    NOW() - INTERVAL '4 hours',
    NOW() + INTERVAL '1 day'),
-  ('m1000000-0000-0000-0000-000000000003',
+  ('f1000000-0000-0000-0000-000000000003',
    'c1000000-0000-0000-0000-000000000013',
    'Annual DOT inspection — lighting, brakes, coupling',
    NOW() - INTERVAL '8 hours',
    NOW() + INTERVAL '1 day'),
-  ('m1000000-0000-0000-0000-000000000004',
+  ('f1000000-0000-0000-0000-000000000004',
    'c1000000-0000-0000-0000-000000000014',
    'Refrigeration unit service and seal replacement',
    NOW() - INTERVAL '10 hours',
@@ -100,7 +100,7 @@ INSERT INTO maintenance_record (id, equipment_id, description, scheduled_at, est
 -- ── Breakdown Record ──────────────────────────────────────────────────────────
 -- TK-105: depot breakdown, no load attached → goes to Maintenance column (not InDelivery)
 INSERT INTO breakdown_record (id, equipment_id, breakdown_type, load_attached, reported_at) VALUES
-  ('k1000000-0000-0000-0000-000000000001',
+  ('f2000000-0000-0000-0000-000000000001',
    'c1000000-0000-0000-0000-000000000005',
    'depot', false,
    NOW() - INTERVAL '5 hours');
