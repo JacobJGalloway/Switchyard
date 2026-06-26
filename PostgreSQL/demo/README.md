@@ -77,7 +77,7 @@ is needed. Any username/password user with an Admin role works as the Digital Pa
 
 | Database | Tables cleared |
 |----------|---------------|
-| `switchyard-go` | driver, hos_window, equipment, maintenance_record, breakdown_record, plan_bol_record, plan_bol_stop, driver_bol_assignment |
+| `switchyard` | driver, hos_window, equipment, maintenance_record, breakdown_record, plan_bol_record, plan_bol_stop, driver_bol_assignment |
 | `switchyard_inventory` | Clothing, PPE, Tools |
 | `switchyard_logistics` | BillsOfLading, LineEntries |
 
