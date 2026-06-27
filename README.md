@@ -2,7 +2,7 @@
 <img src="Switchyard.UI/src/assets/logo-full-name-light.png" />
 </div>
 
-# Switchyard 1.2
+# Switchyard 1.3
 
 Switchyard is an inventory, driver, and equipment tracking and management system which coordinates logistics operations across a network of warehouses and stores. Inventory is tracked per location; Bills of Lading govern movement between any combination of stops — from same-day local transfers to multi-stop OTR runs with partial loads. Authenticated via Auth0.
 
@@ -155,19 +155,6 @@ go test ./...
 ```
 
 ## Wanted Features
-
-### v1.3 — Next sprint
-- [X] Mid-BOL transfer stops — `transfer` stop type; formal custody checkpoint for driver/equipment handoffs mid-route; requires `DriverBOLAssignment` restructuring
-- [X] Demo reset / reseed script — date-relative seed so the board always looks like a live operational day at demo time
-- [X] Two-company demo seed — Company A (Monday morning, default brand) and Company B (mid-week complexity, client palette override)
-- [X] Dispatch board dark mode nuance rework + favicon swap
-- [X] SKU unit price — extend inventory model to hold unit price; foundation for analytics such as revenue vs. profit charts and other displays
-- [X] SKU movement chart — warehouse filter, SKU filter, and chart dots all working; EF Core funcletizer bug bypassed by materializing before `Split()`
-- [X] Explicit routes on all controllers — plural kebab-case across all 10 controllers in both APIs; UI callers and Go integration clients updated to match
-- [X] Auth0 Google login — single-click through; `onRedirectCallback` + `isLoading` guard + `strictPort: true` in `vite.config.ts` to prevent port drift
-- [X] Receive-delivery endpoint — flip `Projected = false` and set `LocationId` when a BOL stop is confirmed; currently missing, seed mimics it manually
-- [X] Resting driver EXPIRED bug — drivers whose mandated rest has elapsed now graduate to Available instead of showing EXPIRED in the Resting sub-section
-- [X] Deadhead cutoff window — `DEADHEAD_CUTOFF_MINUTES` system config (default 30); deadhead pairings rejected when driver is within cutoff of their last stop; configurable for future per-driver or per-state overrides
 
 ### v1.4 Wanted Features - Demo Stable Hardening / pilot-client ready; order flexible relative to v1.3 completion
 - [ ] Empty Return board state — new Available sub-section for drivers on empty return to originating warehouse; ETA visible for pre-planning next BOL assignment
