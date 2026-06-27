@@ -166,8 +166,13 @@ go test ./...
 - [X] Explicit routes on all controllers — plural kebab-case across all 10 controllers in both APIs; UI callers and Go integration clients updated to match
 - [X] Auth0 Google login — single-click through; `onRedirectCallback` + `isLoading` guard + `strictPort: true` in `vite.config.ts` to prevent port drift
 - [X] Receive-delivery endpoint — flip `Projected = false` and set `LocationId` when a BOL stop is confirmed; currently missing, seed mimics it manually
+- [X] Resting driver EXPIRED bug — drivers whose mandated rest has elapsed now graduate to Available instead of showing EXPIRED in the Resting sub-section
+- [X] Deadhead cutoff window — `DEADHEAD_CUTOFF_MINUTES` system config (default 30); deadhead pairings rejected when driver is within cutoff of their last stop; configurable for future per-driver or per-state overrides
 
 ### v1.4 Wanted Features - Demo Stable Hardening / pilot-client ready; order flexible relative to v1.3 completion
+- [ ] Empty Return board state — new Available sub-section for drivers on empty return to originating warehouse; ETA visible for pre-planning next BOL assignment
+- [ ] Delivered column redesign — BOL-only close-out card; driver and equipment decouple from the BOL at last stop confirmation and route independently to Empty Return / Available / Maintenance; Delivered represents dispatch review, client notification, and final paperwork before archiving
+- [ ] Deadhead pairing — enforce `DEADHEAD_CUTOFF_MINUTES` window at the board level; pairing must be secured before driver reaches last stop or contract is voided; driver routes to Empty Return on last stop confirmation
 - [ ] Rolling refresh tokens for Auth0 sessions in place of fixed-expiry client secrets
 - [ ] Color contrast audit (WCAG AA) — verify all text/bg combinations across light and dark themes
 - [ ] ARIA compliance audit — board columns, cards, icon-only buttons, skip-nav

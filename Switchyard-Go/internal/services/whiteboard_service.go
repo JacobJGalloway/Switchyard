@@ -414,6 +414,18 @@ func (s *WhiteboardService) GetBoardState(ctx context.Context) (*BoardState, err
 
 		if window != nil && window.MandatedStopAt != nil {
 			restEndsAt, restType := computeRestEnd(window, limit)
+			if !restEndsAt.After(time.Now()) {
+				// Rest period has elapsed — driver is legally available again.
+				hosStatus, pillTone, pillLabel := s.hosStateForWindow(ctx, window, d.LicenseState)
+				board.Available.AvailableNow = append(board.Available.AvailableNow, &AvailableDriverCard{
+					Driver:       d,
+					HOSWindow:    window,
+					HOSStatus:    hosStatus,
+					HOSPillTone:  pillTone,
+					HOSPillLabel: pillLabel,
+				})
+				continue
+			}
 			board.Available.Resting = append(board.Available.Resting, &RestingDriverCard{
 				Driver:         d,
 				HOSWindow:      window,
