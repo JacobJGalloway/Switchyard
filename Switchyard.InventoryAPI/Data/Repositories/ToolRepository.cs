@@ -68,6 +68,20 @@ namespace Switchyard.InventoryAPI.Data.Repositories
             if (unloadedDate.HasValue) target.UnloadedDate = unloadedDate.Value;
         }
 
+        public async Task ReceiveDeliveryAsync(string skuMarker, int quantity, string locationId)
+        {
+            var items = await writeContext.Tool
+                .Where(t => t.SKUMarker == skuMarker && t.Projected)
+                .Take(quantity)
+                .ToListAsync();
+
+            foreach (var item in items)
+            {
+                item.Projected = false;
+                item.LocationId = locationId;
+            }
+        }
+
         public async Task<bool> DeleteBySKUIdAsync(string skuId)
         {
             var items = await writeContext.Tool

@@ -255,6 +255,7 @@ func (h *AssignmentHandler) Fulfill(w http.ResponseWriter, r *http.Request) {
 
 // ConfirmDeadhead handles PATCH /api/assignment/:id/deadhead
 // Confirms the dead-head return run, clearing the driver card from the board.
+// Valid for both normal fulfilled assignments and transfer deadhead assignments.
 func (h *AssignmentHandler) ConfirmDeadhead(w http.ResponseWriter, r *http.Request) {
 	id, ok := parseUUID(w, chi.URLParam(r, "id"))
 	if !ok {
@@ -265,8 +266,8 @@ func (h *AssignmentHandler) ConfirmDeadhead(w http.ResponseWriter, r *http.Reque
 		writeError(w, http.StatusNotFound, "assignment not found")
 		return
 	}
-	if assignment.FulfilledAt == nil {
-		writeError(w, http.StatusConflict, "assignment must be fulfilled before confirming dead-head")
+	if assignment.FulfilledAt == nil && assignment.TransferredAt == nil {
+		writeError(w, http.StatusConflict, "assignment must be fulfilled or transferred before confirming dead-head")
 		return
 	}
 	if assignment.DeadheadConfirmedAt != nil {
@@ -286,4 +287,193 @@ func (h *AssignmentHandler) ConfirmDeadhead(w http.ResponseWriter, r *http.Reque
 		EquipmentID:  assignment.EquipmentID,
 	})
 	w.WriteHeader(http.StatusNoContent)
+}
+
+type transferRequest struct {
+	IncomingDriverID    string  `json:"incoming_driver_id"`
+	IncomingEquipmentID string  `json:"incoming_equipment_id"`
+	TransferLocationID  string  `json:"transfer_location_id"`
+	TransferReason      string  `json:"transfer_reason"`
+	Notes               *string `json:"notes"`
+	EstimatedRunHours   float64 `json:"estimated_run_hours"`
+	StateCode           string  `json:"state_code"`
+	CycleLabel          string  `json:"cycle_label"`
+}
+
+type custodySegment struct {
+	*models.DriverBOLAssignment
+	Driver    *models.Driver    `json:"driver"`
+	Equipment *models.Equipment `json:"equipment"`
+}
+
+type custodyChainResponse struct {
+	PlanBOLID string            `json:"plan_bol_id"`
+	Segments  []*custodySegment `json:"segments"`
+}
+
+// Transfer handles POST /api/plan-bol/:id/transfer
+// Initiates a mid-route driver handoff: closes the outgoing driver's segment,
+// creates a transfer stop, and opens a new segment for the incoming driver.
+// The trailer stays on the BOL; the truck swaps with the incoming driver.
+func (h *AssignmentHandler) Transfer(w http.ResponseWriter, r *http.Request) {
+	planBOLID, ok := parseUUID(w, chi.URLParam(r, "id"))
+	if !ok {
+		return
+	}
+
+	var req transferRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	incomingDriverID, err := uuid.Parse(req.IncomingDriverID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid incoming_driver_id")
+		return
+	}
+	incomingEquipID, err := uuid.Parse(req.IncomingEquipmentID)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid incoming_equipment_id")
+		return
+	}
+	if req.TransferLocationID == "" {
+		writeError(w, http.StatusBadRequest, "transfer_location_id is required")
+		return
+	}
+	switch models.TransferReason(req.TransferReason) {
+	case models.TransferReasonHOSLimit, models.TransferReasonEmergency,
+		models.TransferReasonPlanned, models.TransferReasonOther:
+	default:
+		writeError(w, http.StatusBadRequest, "transfer_reason must be one of: hos_limit, emergency, planned, other")
+		return
+	}
+	if req.StateCode == "" || req.CycleLabel == "" {
+		writeError(w, http.StatusBadRequest, "state_code and cycle_label are required")
+		return
+	}
+
+	bol, err := h.bolRepo.GetByID(r.Context(), planBOLID)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "plan BOL not found")
+		return
+	}
+	if bol.Status != models.PlanBOLStatusSubmitted {
+		writeError(w, http.StatusConflict, "plan BOL must be in submitted status to initiate a transfer")
+		return
+	}
+
+	current, err := h.assignRepo.GetByPlanBOL(r.Context(), planBOLID)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "no active assignment found for this BOL")
+		return
+	}
+	if current.DepartedAt == nil {
+		writeError(w, http.StatusConflict, "assignment has not yet departed")
+		return
+	}
+	if current.FulfilledAt != nil {
+		writeError(w, http.StatusConflict, "assignment is already fulfilled")
+		return
+	}
+
+	incomingEquip, err := h.equipRepo.GetByID(r.Context(), incomingEquipID)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "incoming equipment not found")
+		return
+	}
+	if incomingEquip.Status != models.EquipmentStatusAvailable {
+		writeError(w, http.StatusConflict, "incoming equipment is not available")
+		return
+	}
+
+	if err := h.hosSvc.CanAssign(r.Context(), incomingDriverID, req.EstimatedRunHours, req.StateCode, req.CycleLabel); err != nil {
+		writeError(w, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+
+	now := time.Now().UTC()
+
+	// Transfer stop records the handoff location. Marked processed immediately —
+	// it is a custody checkpoint, not a delivery destination.
+	reason := models.TransferReason(req.TransferReason)
+	transferStop := &models.PlanBOLStop{
+		ID:          uuid.New(),
+		PlanBOLID:   planBOLID,
+		Sequence:    9999,
+		LocationID:  req.TransferLocationID,
+		StopType:    models.StopTypeTransfer,
+		IsProcessed: true,
+		ProcessedAt: &now,
+	}
+	if err := h.bolRepo.CreateStop(r.Context(), transferStop); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to create transfer stop")
+		return
+	}
+
+	if err := h.assignRepo.InitiateTransfer(r.Context(), current.ID, now, transferStop.ID); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to close outgoing assignment")
+		return
+	}
+
+	if err := h.equipRepo.UpdateStatus(r.Context(), current.EquipmentID, models.EquipmentStatusAvailable); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to release outgoing equipment")
+		return
+	}
+
+	startStopID := transferStop.ID
+	incoming := &models.DriverBOLAssignment{
+		ID:                 uuid.New(),
+		DriverID:           incomingDriverID,
+		PlanBOLID:          planBOLID,
+		EquipmentID:        incomingEquipID,
+		BaseRatePerMile:    current.BaseRatePerMile,
+		AssignedAt:         now,
+		DepartedAt:         &now,
+		TransferReason:     &reason,
+		Notes:              req.Notes,
+		SegmentStartStopID: &startStopID,
+	}
+	if err := h.assignRepo.Create(r.Context(), incoming); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to create incoming assignment")
+		return
+	}
+
+	if err := h.equipRepo.UpdateStatus(r.Context(), incomingEquipID, models.EquipmentStatusAssigned); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to assign incoming equipment")
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, incoming)
+}
+
+// GetCustodyChain handles GET /api/plan-bol/:id/assignments
+// Returns the full driver custody chain for a BOL, ordered from origin to current.
+func (h *AssignmentHandler) GetCustodyChain(w http.ResponseWriter, r *http.Request) {
+	planBOLID, ok := parseUUID(w, chi.URLParam(r, "id"))
+	if !ok {
+		return
+	}
+
+	chain, err := h.assignRepo.GetCustodyChain(r.Context(), planBOLID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to load custody chain")
+		return
+	}
+
+	segments := make([]*custodySegment, 0, len(chain))
+	for _, a := range chain {
+		driver, _ := h.driverRepo.GetByID(r.Context(), a.DriverID)
+		equip, _ := h.equipRepo.GetByID(r.Context(), a.EquipmentID)
+		segments = append(segments, &custodySegment{
+			DriverBOLAssignment: a,
+			Driver:              driver,
+			Equipment:           equip,
+		})
+	}
+
+	writeJSON(w, http.StatusOK, custodyChainResponse{
+		PlanBOLID: planBOLID.String(),
+		Segments:  segments,
+	})
 }

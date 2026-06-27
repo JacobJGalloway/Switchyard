@@ -4,6 +4,7 @@ import type { Warehouse, Store, InventoryItem, InventoryType, LocationType } fro
 import styles from './InventoryViewer.module.css'
 
 const INVENTORY_TYPES: InventoryType[] = ['Clothing', 'PPE', 'Tool']
+const INVENTORY_ROUTE: Record<InventoryType, string> = { Clothing: 'clothing', PPE: 'ppe', Tool: 'tools' }
 const PAGE_SIZE = 50
 
 export default function InventoryViewer() {
@@ -22,9 +23,9 @@ export default function InventoryViewer() {
 
   useEffect(() => {
     if (locationType === 'Warehouse') {
-      logistics.get<Warehouse[]>('/api/Warehouse').then(setWarehouses).catch(() => setWarehouses([]))
+      logistics.get<Warehouse[]>('/api/warehouses').then(setWarehouses).catch(() => setWarehouses([]))
     } else if (locationType === 'Store') {
-      logistics.get<Store[]>('/api/Store').then(setStores).catch(() => setStores([]))
+      logistics.get<Store[]>('/api/stores').then(setStores).catch(() => setStores([]))
     }
     setSelectedLocationId('')
     setResults(new Map())
@@ -41,7 +42,7 @@ export default function InventoryViewer() {
     setError('')
     try {
       const fetches = INVENTORY_TYPES.map(async type => {
-        const items = await inventory.get<InventoryItem[]>(`/api/${type}/location/${selectedLocationId}`)
+        const items = await inventory.get<InventoryItem[]>(`/api/${INVENTORY_ROUTE[type]}/location/${selectedLocationId}`)
         return [type, items] as const
       })
       const entries = await Promise.all(fetches)

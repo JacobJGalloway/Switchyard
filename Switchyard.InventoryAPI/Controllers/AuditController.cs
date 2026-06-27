@@ -5,7 +5,7 @@ using Switchyard.InventoryAPI.Data;
 namespace Switchyard.InventoryAPI.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/audits")]
     public class AuditController(InventoryContext writeCtx, InventoryReadContext readCtx) : ControllerBase
     {
         /// <summary>Returns write vs read DB row counts for Clothing, PPE, and Tool tables, with an InSync flag per table.</summary>

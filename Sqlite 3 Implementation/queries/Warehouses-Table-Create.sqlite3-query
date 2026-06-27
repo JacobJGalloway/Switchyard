@@ -1,7 +1,0 @@
--- database: ../WarehouseData.db3
-
-CREATE TABLE IF NOT EXISTS Warehouses (
-    WarehouseId    TEXT NOT NULL UNIQUE PRIMARY KEY,
-    City           TEXT NOT NULL DEFAULT '',
-    State          TEXT NOT NULL DEFAULT ''
-);

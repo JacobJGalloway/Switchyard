@@ -1,0 +1,38 @@
+services:
+
+  switchyard-pg:
+    image: postgres:16-alpine
+    container_name: switchyard-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB:       postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - switchyard-pg-data:/var/lib/postgresql/data
+      - ./docker/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  switchyard-pgadmin:
+    image: dpage/pgadmin4
+    container_name: switchyard-pgadmin
+    restart: unless-stopped
+    depends_on:
+      switchyard-pg:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL:    admin@switchyard.dev
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    user: root
+
+volumes:
+  switchyard-pg-data:

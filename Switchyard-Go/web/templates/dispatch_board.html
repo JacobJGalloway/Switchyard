@@ -29,6 +29,10 @@
 
       /* Nav / header surface — slightly darker than board bg for elevation */
       --nav-bg: #2a2c2e;
+      /* Nav text stays light in dark mode — nav-bg is dark */
+      --nav-text:   #EEEEEE;
+      --nav-muted:  #9CA3AF;
+      --nav-divider: #505254;
 
       /* Badge / tag tinted backgrounds */
       --badge-warn-bg:       #2a2010;
@@ -71,7 +75,8 @@
     /* ── Light mode overrides ── */
     html[data-theme="light"] {
       --bg:         #EEEEEE;
-      --nav-bg:     #3B3A3C;
+      --nav-bg:     #EEEEEE;
+      --nav-divider: #3B3A3C;
       --col-bg:     #E0E0E2;
       --pool-bg:    #E5E4E7;
       --card-bg:    #F7F7F8;
@@ -80,6 +85,9 @@
       --muted:      #6B6375;
       --danger-bg:  #fee2e2;
       --ok-dim:     #dcfce7;
+      /* Nav is light in light mode — flip text tokens dark */
+      --nav-text:   #3B3A3C;
+      --nav-muted:  #6B6375;
 
       --badge-warn-bg:       #fef3c7;
       --badge-danger-bg:     #fee2e2;
@@ -103,11 +111,12 @@
     /* ── Theme toggle ── */
     .theme-btn {
       background: none; border: none; cursor: pointer;
-      color: var(--muted); padding: 4px 6px; border-radius: 4px;
-      font-size: 16px; line-height: 1;
+      color: var(--nav-muted); padding: 4px 8px; border-radius: 4px;
+      font-size: 11px; font-weight: 600; letter-spacing: .05em; line-height: 1;
+      display: flex; align-items: center; gap: 4px;
       transition: color .15s;
     }
-    .theme-btn:hover        { color: var(--text); }
+    .theme-btn:hover        { color: var(--nav-text); }
     .theme-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -126,7 +135,7 @@
       display: flex; align-items: center; gap: 16px;
       padding: 8px 16px;
       background: var(--nav-bg);
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid var(--nav-divider);
       flex-shrink: 0;
     }
     .brand-lockup {
@@ -135,7 +144,7 @@
       flex-shrink: 0;
     }
     .brand-icon { width: 28px; height: 28px; display: block; }
-    .brand      { font-size: 15px; font-weight: 700; letter-spacing: .04em; color: var(--text); }
+    .brand      { font-size: 15px; font-weight: 700; letter-spacing: .04em; color: var(--nav-text); }
 
     /* ── Main nav ── */
     .main-nav {
@@ -144,13 +153,13 @@
     }
     .main-nav a {
       font-size: 13px; font-weight: 500;
-      color: var(--muted);
+      color: var(--nav-muted);
       text-decoration: none;
       padding: 5px 10px;
       border-radius: 4px;
       transition: color .15s;
     }
-    .main-nav a:hover    { color: var(--text); }
+    .main-nav a:hover    { color: var(--nav-text); }
     .main-nav a.nav-active {
       color: var(--accent);
       border-bottom: 2px solid var(--accent);
@@ -158,7 +167,7 @@
       padding-bottom: 3px;
     }
 
-    .stamp { margin-left: auto; font-size: 11px; color: var(--muted); }
+    .stamp { margin-left: auto; font-size: 11px; color: var(--nav-muted); }
 
     /* ── Board grid — 7 columns ── */
     /* Left 5: workflow pipeline | Right 2: resource pools */
@@ -338,7 +347,9 @@
   </nav>
 
   <span class="stamp">{{.GeneratedAt.Format "15:04"}} CT &mdash; auto-refreshes every 30 s</span>
-  <button class="theme-btn" onclick="toggleTheme()" title="Toggle light/dark mode" aria-label="Toggle light/dark mode">☀</button>
+  <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle light/dark mode" aria-label="Toggle light/dark mode">
+    <span id="theme-icon">☀</span><span id="theme-label">Light</span>
+  </button>
 </header>
 
 <div class="board">
@@ -547,15 +558,30 @@
   setInterval(tick, 1000);
 })();
 
+function setThemeBtn(theme) {
+  var icon  = document.getElementById('theme-icon');
+  var label = document.getElementById('theme-label');
+  if (!icon || !label) return;
+  if (theme === 'dark') {
+    icon.textContent  = '☀';
+    label.textContent = 'Light';
+  } else {
+    icon.textContent  = '☾';
+    label.textContent = 'Dark';
+  }
+}
+
 function toggleTheme() {
-  var html  = document.documentElement;
-  var cur   = html.getAttribute('data-theme') || 'dark';
-  var next  = cur === 'dark' ? 'light' : 'dark';
+  var html = document.documentElement;
+  var cur  = html.getAttribute('data-theme') || 'dark';
+  var next = cur === 'dark' ? 'light' : 'dark';
   html.setAttribute('data-theme', next);
   localStorage.setItem('board-theme', next);
-  var btn   = document.querySelector('.theme-btn');
-  if (btn) btn.textContent = next === 'dark' ? '☀' : '☾';
+  setThemeBtn(next);
 }
+
+/* Initialize button label to match stored/default theme */
+setThemeBtn(document.documentElement.getAttribute('data-theme') || 'dark');
 
 function toggleAvailable() {
   var btn       = document.getElementById('avail-toggle');

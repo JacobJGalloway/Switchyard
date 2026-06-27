@@ -31,6 +31,13 @@ namespace Switchyard.InventoryAPI.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("PriceCurrency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("PriceEffectiveDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("Projected")
                         .HasColumnType("boolean");
 
@@ -41,6 +48,9 @@ namespace Switchyard.InventoryAPI.Data.Migrations
                     b.Property<string>("SKUMarker")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("numeric");
 
                     b.Property<DateTime>("UnloadedDate")
                         .HasColumnType("timestamp with time zone");
@@ -59,6 +69,13 @@ namespace Switchyard.InventoryAPI.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("PriceCurrency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("PriceEffectiveDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("Projected")
                         .HasColumnType("boolean");
 
@@ -69,6 +86,9 @@ namespace Switchyard.InventoryAPI.Data.Migrations
                     b.Property<string>("SKUMarker")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("numeric");
 
                     b.Property<DateTime>("UnloadedDate")
                         .HasColumnType("timestamp with time zone");
@@ -87,6 +107,13 @@ namespace Switchyard.InventoryAPI.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("PriceCurrency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("PriceEffectiveDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("Projected")
                         .HasColumnType("boolean");
 
@@ -97,6 +124,9 @@ namespace Switchyard.InventoryAPI.Data.Migrations
                     b.Property<string>("SKUMarker")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("numeric");
 
                     b.Property<DateTime>("UnloadedDate")
                         .HasColumnType("timestamp with time zone");

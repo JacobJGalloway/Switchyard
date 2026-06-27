@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth0 } from '@auth0/auth0-react'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import LoginPage from './pages/LoginPage'
@@ -8,6 +9,9 @@ import BillsOfLadingPage from './pages/BillsOfLadingPage'
 import UsersPage from './pages/UsersPage'
 
 export default function App() {
+  const { isLoading } = useAuth0()
+  if (isLoading) return null
+
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />

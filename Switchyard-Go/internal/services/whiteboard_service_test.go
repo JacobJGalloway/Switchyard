@@ -60,6 +60,12 @@ func (r *wbAssignRepo) MarkFulfilled(_ context.Context, _ uuid.UUID, _ time.Time
 func (r *wbAssignRepo) ConfirmDeadhead(_ context.Context, _ uuid.UUID, _ time.Time) error {
 	panic("not implemented")
 }
+func (r *wbAssignRepo) GetCustodyChain(_ context.Context, _ uuid.UUID) ([]*models.DriverBOLAssignment, error) {
+	panic("not implemented")
+}
+func (r *wbAssignRepo) InitiateTransfer(_ context.Context, _ uuid.UUID, _ time.Time, _ uuid.UUID) error {
+	panic("not implemented")
+}
 
 type wbBOLRepo struct {
 	byStatus map[models.PlanBOLStatus][]*models.PlanBOLRecord

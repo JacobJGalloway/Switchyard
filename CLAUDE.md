@@ -7,11 +7,11 @@ This file provides guidance to Claude Code when working with code in this reposi
 Switchyard — multi-service warehouse management system. Solution file: `Switchyard.InventoryAPI.sln`.
 
 **Services:**
-1. `Switchyard.InventoryAPI/` — Inventory API. Tracks warehouse inventory (Clothing, PPE, Tools) backed by SQLite via EF Core.
+1. `Switchyard.InventoryAPI/` — Inventory API. Tracks warehouse inventory (Clothing, PPE, Tools) backed by PostgreSQL via EF Core.
 2. `Switchyard.LogisticsAPI/` — Logistics API. Handles Bill of Lading creation and location-stop processing. References the Inventory project.
 3. `Switchyard.UI/` — Client UI for inventory withdrawals. Not yet started (README placeholder only).
 
-**Shared database:** `Sqlite 3 Implementation/WarehouseData.db3` — both APIs resolve this path relative to their content root at startup.
+**Databases:** Both APIs use PostgreSQL on port 5433 (`switchyard-pg` Docker container). Query files and seed scripts live in `PostgreSQL/queries/`. See `PostgreSQL/README.md` for setup order.
 
 ## Build & Run
 

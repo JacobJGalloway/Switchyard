@@ -12,6 +12,7 @@ const (
 	StopTypeWarehouse   StopType = "warehouse"
 	StopTypeStore       StopType = "store"
 	StopTypeReturnDepot StopType = "return_depot"
+	StopTypeTransfer    StopType = "transfer"
 )
 
 type PlanBOLStatus string
@@ -37,7 +38,7 @@ type PlanBOLRecord struct {
 	FulfilledAt            *time.Time `json:"fulfilled_at,omitempty"`
 	MilesDriven            *float64   `json:"miles_driven,omitempty"`
 	// SubmittedTransactionID is the .NET Logistics API transaction ID assigned
-	// when the plan is committed via POST /api/BillOfLading. Required for
+	// when the plan is committed via POST /api/bills-of-lading. Required for
 	// ProcessStop calls on subsequent driver stop logs.
 	SubmittedTransactionID *string    `json:"submitted_transaction_id,omitempty"`
 }

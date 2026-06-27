@@ -11,5 +11,6 @@ public class BillOfLading : IBillOfLading
     public string CustomerLastName { get; set; } = string.Empty;
     public string City { get; set; } = string.Empty;
     public string State { get; set; } = string.Empty;
+    public DateTime? CommittedDate { get; set; }
     public required List<LineEntry> LineEntries { get; set; } = [];
 }

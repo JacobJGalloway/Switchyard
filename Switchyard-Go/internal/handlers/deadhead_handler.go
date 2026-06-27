@@ -12,19 +12,22 @@ import (
 	"github.com/JacobJGalloway/switchyard-go/internal/repository"
 )
 
-// DeadheadHandler manages dead-head BOL pairing and the 4-hour window constraint.
+// DeadheadHandler manages dead-head BOL pairing and the window/cutoff constraints.
 type DeadheadHandler struct {
-	pairingRepo         repository.PairingRepository
-	deadheadWindowHours float64 // DEADHEAD_WINDOW_HOURS env var (hard minimum lead time)
+	pairingRepo          repository.PairingRepository
+	deadheadWindowHours  float64 // DEADHEAD_WINDOW_HOURS — minimum lead time to find a match
+	cutoffMinutes        float64 // DEADHEAD_CUTOFF_MINUTES — hard pre-arrival deadline at last stop
 }
 
 func NewDeadheadHandler(
 	pairingRepo repository.PairingRepository,
 	deadheadWindowHours float64,
+	cutoffMinutes float64,
 ) *DeadheadHandler {
 	return &DeadheadHandler{
 		pairingRepo:         pairingRepo,
 		deadheadWindowHours: deadheadWindowHours,
+		cutoffMinutes:       cutoffMinutes,
 	}
 }
 
@@ -102,6 +105,16 @@ func (h *DeadheadHandler) Pair(w http.ResponseWriter, r *http.Request) {
 			"dead-head pairing window has closed — must be arranged at least "+
 				fmt.Sprintf("%.0f hours", h.deadheadWindowHours)+
 				" before estimated BOL fulfillment")
+		return
+	}
+
+	// Pre-arrival cutoff: pairing contract must be completed at least DEADHEAD_CUTOFF_MINUTES
+	// before the driver reaches their last stop. If within the cutoff, the contract is void.
+	cutoff := time.Duration(h.cutoffMinutes * float64(time.Minute))
+	cutoffDeadline := req.EstimatedFulfillmentAt.Add(-cutoff)
+	if !time.Now().Before(cutoffDeadline) {
+		writeError(w, http.StatusConflict,
+			fmt.Sprintf("dead-head contract deadline passed — pairing must be secured at least %.0f minutes before driver arrives at last stop", h.cutoffMinutes))
 		return
 	}
 

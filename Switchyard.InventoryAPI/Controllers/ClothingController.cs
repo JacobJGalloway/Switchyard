@@ -7,7 +7,7 @@ namespace Switchyard.InventoryAPI.Controllers
 {
     [Authorize]
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/clothing")]
     public class ClothingController(IClothingService clothingService) : ControllerBase
     {
         private readonly IClothingService _clothingService = clothingService;

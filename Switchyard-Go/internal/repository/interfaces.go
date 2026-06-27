@@ -55,16 +55,23 @@ type PlanBOLRepository interface {
 type AssignmentRepository interface {
 	Create(ctx context.Context, a *models.DriverBOLAssignment) error
 	GetByID(ctx context.Context, id uuid.UUID) (*models.DriverBOLAssignment, error)
+	// GetByPlanBOL returns the current active assignment for a BOL (transferred_at IS NULL).
 	GetByPlanBOL(ctx context.Context, planBOLID uuid.UUID) (*models.DriverBOLAssignment, error)
 	// GetAllActive returns all assignments where deadhead_confirmed_at IS NULL.
-	// This covers Pending Dispatch, In Transit, and Delivered board states.
+	// This covers Pending Dispatch, In Transit, Delivered, and Transfer Deadhead board states.
 	GetAllActive(ctx context.Context) ([]*models.DriverBOLAssignment, error)
 	// GetActiveByDriver returns the most recent assignment for a driver where
 	// deadhead_confirmed_at IS NULL. Returns nil, nil when the driver has no active run.
 	GetActiveByDriver(ctx context.Context, driverID uuid.UUID) (*models.DriverBOLAssignment, error)
+	// GetCustodyChain returns all assignments for a BOL ordered by assigned_at ascending.
+	// Single-driver BOLs return one record; transferred BOLs return the full chain.
+	GetCustodyChain(ctx context.Context, planBOLID uuid.UUID) ([]*models.DriverBOLAssignment, error)
 	MarkDeparted(ctx context.Context, id uuid.UUID, departedAt time.Time) error
 	MarkFulfilled(ctx context.Context, id uuid.UUID, fulfilledAt time.Time) error
 	ConfirmDeadhead(ctx context.Context, id uuid.UUID, confirmedAt time.Time) error
+	// InitiateTransfer closes the outgoing driver's segment by stamping transferred_at
+	// and setting segment_end_stop_id to the transfer stop.
+	InitiateTransfer(ctx context.Context, id uuid.UUID, transferredAt time.Time, segmentEndStopID uuid.UUID) error
 }
 
 type PairingRepository interface {

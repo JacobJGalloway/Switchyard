@@ -24,6 +24,17 @@ namespace Switchyard.InventoryAPI.Data
         public async Task<List<Tool>> GetToolBySKUIdAsync(string skuId) =>
             await readContext.Tool.Where(t => t.SKUMarker == skuId).AsNoTracking().ToListAsync();
 
+        public async Task ReceiveDeliveryAsync(string locationId, List<DeliveryLineItem> items)
+        {
+            foreach (var item in items)
+            {
+                await Clothing.ReceiveDeliveryAsync(item.SKUMarker, item.Quantity, locationId);
+                await PPE.ReceiveDeliveryAsync(item.SKUMarker, item.Quantity, locationId);
+                await Tools.ReceiveDeliveryAsync(item.SKUMarker, item.Quantity, locationId);
+            }
+            await SaveChangesAsync();
+        }
+
         public async Task<int> SaveChangesAsync() => await context.SaveChangesAsync();
 
         public void Dispose()

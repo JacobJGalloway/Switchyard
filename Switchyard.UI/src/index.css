@@ -42,6 +42,7 @@
   --text-h: var(--n-900);
   --bg: var(--n-100);
   --border: var(--n-200);
+  --divider: var(--text-h);
   --code-bg: #f4f3ec;
   --nav-text: #3b3a3c;
   --surface: var(--n-100);
@@ -74,6 +75,7 @@
   --text-h: #eeeeee;
   --bg: #3b3a3c;
   --border: #2e303a;
+  --divider: #555457;
   --code-bg: #1f2028;
   --accent: #c084fc;
   --accent-bg: rgba(192, 132, 252, 0.15);

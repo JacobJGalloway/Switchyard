@@ -1,4 +1,4 @@
-package handlers
+﻿package handlers
 
 import (
 	"bytes"
@@ -47,7 +47,7 @@ func (r *stubPairingRepo) UpdateStatus(_ context.Context, _ uuid.UUID, _ models.
 // --- GetEligible ---
 
 func TestDeadheadGetEligible_MissingLocation_Returns400(t *testing.T) {
-	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0)
+	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0, 30.0)
 	q := url.Values{"estimated_completion": {time.Now().Format(time.RFC3339)}}
 	req := httptest.NewRequest(http.MethodGet, "/?"+q.Encode(), nil)
 	rec := httptest.NewRecorder()
@@ -56,7 +56,7 @@ func TestDeadheadGetEligible_MissingLocation_Returns400(t *testing.T) {
 }
 
 func TestDeadheadGetEligible_MissingEstimatedCompletion_Returns400(t *testing.T) {
-	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0)
+	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0, 30.0)
 	q := url.Values{"location": {"wh-1"}}
 	req := httptest.NewRequest(http.MethodGet, "/?"+q.Encode(), nil)
 	rec := httptest.NewRecorder()
@@ -65,7 +65,7 @@ func TestDeadheadGetEligible_MissingEstimatedCompletion_Returns400(t *testing.T)
 }
 
 func TestDeadheadGetEligible_InvalidTimeFormat_Returns400(t *testing.T) {
-	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0)
+	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0, 30.0)
 	q := url.Values{"location": {"wh-1"}, "estimated_completion": {"not-a-time"}}
 	req := httptest.NewRequest(http.MethodGet, "/?"+q.Encode(), nil)
 	rec := httptest.NewRecorder()
@@ -74,7 +74,7 @@ func TestDeadheadGetEligible_InvalidTimeFormat_Returns400(t *testing.T) {
 }
 
 func TestDeadheadGetEligible_ValidParams_Returns200(t *testing.T) {
-	h := NewDeadheadHandler(&stubPairingRepo{pairings: []*models.PlanBOLPairing{}}, 4.0)
+	h := NewDeadheadHandler(&stubPairingRepo{pairings: []*models.PlanBOLPairing{}}, 4.0, 30.0)
 	q := url.Values{
 		"location":             {"wh-1"},
 		"estimated_completion": {time.Now().Add(2 * time.Hour).Format(time.RFC3339)},
@@ -85,11 +85,11 @@ func TestDeadheadGetEligible_ValidParams_Returns200(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 }
 
-// --- Pair (4-hour window enforcement — architecture §4.2 hard constraint) ---
+// --- Pair (4-hour window enforcement â€” architecture Â§4.2 hard constraint) ---
 
 func TestDeadheadPair_WindowAlreadyClosed_Returns409(t *testing.T) {
-	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0)
-	// Fulfillment in 1 hour — less than the 4-hour required lead time.
+	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0, 30.0)
+	// Fulfillment in 1 hour â€” less than the 4-hour required lead time.
 	body := map[string]any{
 		"active_bol_id":            uuid.New().String(),
 		"deadhead_bol_id":          uuid.New().String(),
@@ -104,8 +104,8 @@ func TestDeadheadPair_WindowAlreadyClosed_Returns409(t *testing.T) {
 
 func TestDeadheadPair_WindowOpen_Returns201(t *testing.T) {
 	repo := &stubPairingRepo{}
-	h := NewDeadheadHandler(repo, 4.0)
-	// Fulfillment in 6 hours — well within the 4-hour lead-time window.
+	h := NewDeadheadHandler(repo, 4.0, 30.0)
+	// Fulfillment in 6 hours â€” well within the 4-hour lead-time window.
 	body := map[string]any{
 		"active_bol_id":            uuid.New().String(),
 		"deadhead_bol_id":          uuid.New().String(),
@@ -122,7 +122,7 @@ func TestDeadheadPair_WindowOpen_Returns201(t *testing.T) {
 
 func TestDeadheadPair_ExactlyAtWindow_Returns409(t *testing.T) {
 	// Fulfillment in exactly 4 hours: earliestValidAt == now, window is closed (< not <=).
-	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0)
+	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0, 30.0)
 	body := map[string]any{
 		"active_bol_id":            uuid.New().String(),
 		"deadhead_bol_id":          uuid.New().String(),
@@ -136,7 +136,7 @@ func TestDeadheadPair_ExactlyAtWindow_Returns409(t *testing.T) {
 }
 
 func TestDeadheadPair_MissingOriginWarehouse_Returns400(t *testing.T) {
-	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0)
+	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0, 30.0)
 	body := map[string]any{
 		"active_bol_id":            uuid.New().String(),
 		"deadhead_bol_id":          uuid.New().String(),
@@ -149,12 +149,12 @@ func TestDeadheadPair_MissingOriginWarehouse_Returns400(t *testing.T) {
 }
 
 func TestDeadheadPair_ZeroEstimatedFulfillment_Returns400(t *testing.T) {
-	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0)
+	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0, 30.0)
 	body := map[string]any{
 		"active_bol_id":   uuid.New().String(),
 		"deadhead_bol_id": uuid.New().String(),
 		"origin_warehouse": "wh-1",
-		// estimated_fulfillment_at intentionally omitted → zero time
+		// estimated_fulfillment_at intentionally omitted â†’ zero time
 	}
 	req := httptest.NewRequest(http.MethodPost, "/api/deadhead/pair", postBody(t, body))
 	rec := httptest.NewRecorder()
@@ -163,7 +163,7 @@ func TestDeadheadPair_ZeroEstimatedFulfillment_Returns400(t *testing.T) {
 }
 
 func TestDeadheadPair_InvalidBOLID_Returns400(t *testing.T) {
-	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0)
+	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0, 30.0)
 	body := map[string]any{
 		"active_bol_id":            "not-a-uuid",
 		"deadhead_bol_id":          uuid.New().String(),
@@ -179,7 +179,7 @@ func TestDeadheadPair_InvalidBOLID_Returns400(t *testing.T) {
 // --- Cancel ---
 
 func TestDeadheadCancel_ValidID_Returns204(t *testing.T) {
-	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0)
+	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0, 30.0)
 	rctx := withPairingIDParam(httptest.NewRequest(http.MethodDelete, "/", nil), uuid.New().String())
 	rec := httptest.NewRecorder()
 	h.Cancel(rec, rctx)
@@ -187,7 +187,7 @@ func TestDeadheadCancel_ValidID_Returns204(t *testing.T) {
 }
 
 func TestDeadheadCancel_InvalidID_Returns400(t *testing.T) {
-	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0)
+	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0, 30.0)
 	rctx := withPairingIDParam(httptest.NewRequest(http.MethodDelete, "/", nil), "bad-id")
 	rec := httptest.NewRecorder()
 	h.Cancel(rec, rctx)
@@ -201,7 +201,7 @@ func withPairingIDParam(r *http.Request, id string) *http.Request {
 }
 
 func TestDeadheadCancel_RepoError_Returns500(t *testing.T) {
-	h := NewDeadheadHandler(&stubPairingRepo{updateStatusErr: errNotFound}, 4.0)
+	h := NewDeadheadHandler(&stubPairingRepo{updateStatusErr: errNotFound}, 4.0, 30.0)
 	rctx := withPairingIDParam(httptest.NewRequest(http.MethodDelete, "/", nil), uuid.New().String())
 	rec := httptest.NewRecorder()
 	h.Cancel(rec, rctx)
@@ -209,7 +209,7 @@ func TestDeadheadCancel_RepoError_Returns500(t *testing.T) {
 }
 
 func TestDeadheadPair_InvalidDeadheadBOLID_Returns400(t *testing.T) {
-	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0)
+	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0, 30.0)
 	body := map[string]any{
 		"active_bol_id":            uuid.New().String(),
 		"deadhead_bol_id":          "not-a-uuid",
@@ -223,7 +223,7 @@ func TestDeadheadPair_InvalidDeadheadBOLID_Returns400(t *testing.T) {
 }
 
 func TestDeadheadPair_BadJSON_Returns400(t *testing.T) {
-	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0)
+	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0, 30.0)
 	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte("not-json")))
 	rec := httptest.NewRecorder()
 	h.Pair(rec, req)
@@ -231,7 +231,7 @@ func TestDeadheadPair_BadJSON_Returns400(t *testing.T) {
 }
 
 func TestDeadheadPair_RepoError_Returns500(t *testing.T) {
-	h := NewDeadheadHandler(&stubPairingRepo{createErr: errNotFound}, 4.0)
+	h := NewDeadheadHandler(&stubPairingRepo{createErr: errNotFound}, 4.0, 30.0)
 	body := map[string]any{
 		"active_bol_id":            uuid.New().String(),
 		"deadhead_bol_id":          uuid.New().String(),
@@ -245,7 +245,7 @@ func TestDeadheadPair_RepoError_Returns500(t *testing.T) {
 }
 
 func TestDeadheadGetEligible_RepoError_Returns500(t *testing.T) {
-	h := NewDeadheadHandler(&stubPairingRepo{getEligibleErr: errNotFound}, 4.0)
+	h := NewDeadheadHandler(&stubPairingRepo{getEligibleErr: errNotFound}, 4.0, 30.0)
 	q := url.Values{
 		"location":             {"wh-1"},
 		"estimated_completion": {time.Now().Add(2 * time.Hour).Format(time.RFC3339)},
@@ -254,4 +254,19 @@ func TestDeadheadGetEligible_RepoError_Returns500(t *testing.T) {
 	rec := httptest.NewRecorder()
 	h.GetEligible(rec, req)
 	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
+func TestDeadheadPair_WithinCutoffWindow_Returns409(t *testing.T) {
+	h := NewDeadheadHandler(&stubPairingRepo{}, 4.0, 30.0)
+	// Fulfillment is 10 minutes away — inside the 30-minute cutoff.
+	body := map[string]any{
+		"active_bol_id":            uuid.New().String(),
+		"deadhead_bol_id":          uuid.New().String(),
+		"estimated_fulfillment_at": time.Now().Add(10 * time.Minute),
+		"origin_warehouse":         "wh-1",
+	}
+	req := httptest.NewRequest(http.MethodPost, "/", postBody(t, body))
+	rec := httptest.NewRecorder()
+	h.Pair(rec, req)
+	assert.Equal(t, http.StatusConflict, rec.Code)
 }

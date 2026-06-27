@@ -27,7 +27,7 @@ export default function UsersPage() {
 
   function loadUsers() {
     setLoading(true)
-    logistics.get<AppUser[]>('/api/User')
+    logistics.get<AppUser[]>('/api/users')
       .then(setUsers)
       .catch(() => setError('Failed to load users.'))
       .finally(() => setLoading(false))
@@ -57,7 +57,7 @@ export default function UsersPage() {
     setSubmitting(true)
     setFormError('')
     try {
-      await logistics.post('/api/User', form)
+      await logistics.post('/api/users', form)
       closeModal()
       loadUsers()
     } catch {
@@ -69,7 +69,7 @@ export default function UsersPage() {
 
   async function handleDeactivate(userId: string) {
     try {
-      await logistics.patch(`/api/User/${encodeURIComponent(userId)}/deactivate`, null)
+      await logistics.patch(`/api/users/${encodeURIComponent(userId)}/deactivate`, null)
       loadUsers()
     } catch {
       setError('Failed to deactivate user.')

@@ -1,0 +1,90 @@
+-- database: switchyard_logistics
+-- 11 transactions, 4-8 line entries each (58 total).
+-- Each BOL has exactly one origin warehouse; its entries appear first.
+-- Quantity: negative = outgoing (origin WH, store delivery), positive = incoming (destination WH transfer).
+-- LocationId has no FK constraint — can be a WarehouseId or StoreId.
+-- SKU ranges: CLTH/SPPE/PWTL 001-009 = WH001, 010-017 = WH002, 018-025 = WH003.
+-- Depends on BillOfLading-Seed-Data, Stores-Seed-Data.
+
+INSERT INTO "LineEntries" ("PartitionKey", "TransactionId", "LocationId", "SKUMarker", "Quantity", "IsProcessed") VALUES
+
+-- Transaction 1 (a1b2c3d4): WH001 → ST0001  [Chicago local delivery]
+('a1b2c3d4-00000000000000000000000000000001', 'a1b2c3d4', 'WH001',  'CLTH001', -20, false),
+('a1b2c3d4-00000000000000000000000000000002', 'a1b2c3d4', 'WH001',  'PWTL002',  -5, false),
+('a1b2c3d4-00000000000000000000000000000003', 'a1b2c3d4', 'ST0001', 'CLTH001', -20, false),
+('a1b2c3d4-00000000000000000000000000000004', 'a1b2c3d4', 'ST0001', 'PWTL002',  -5, false),
+
+-- Transaction 2 (b2c3d4e5): WH001 → ST0002, ST0003  [Chicago multi-store run]
+('b2c3d4e5-00000000000000000000000000000001', 'b2c3d4e5', 'WH001',  'CLTH003', -15, false),
+('b2c3d4e5-00000000000000000000000000000002', 'b2c3d4e5', 'WH001',  'SPPE004', -30, false),
+('b2c3d4e5-00000000000000000000000000000003', 'b2c3d4e5', 'WH001',  'PWTL005',  -8, false),
+('b2c3d4e5-00000000000000000000000000000004', 'b2c3d4e5', 'ST0002', 'CLTH003', -15, false),
+('b2c3d4e5-00000000000000000000000000000005', 'b2c3d4e5', 'ST0002', 'SPPE004', -30, false),
+('b2c3d4e5-00000000000000000000000000000006', 'b2c3d4e5', 'ST0003', 'PWTL005',  -8, false),
+
+-- Transaction 3 (c3d4e5f6): WH002 → WH001  [Indianapolis→Chicago warehouse transfer]
+('c3d4e5f6-00000000000000000000000000000001', 'c3d4e5f6', 'WH002', 'CLTH010', -40, false),
+('c3d4e5f6-00000000000000000000000000000002', 'c3d4e5f6', 'WH002', 'SPPE011', -20, false),
+('c3d4e5f6-00000000000000000000000000000003', 'c3d4e5f6', 'WH001', 'CLTH010',  40, false),
+('c3d4e5f6-00000000000000000000000000000004', 'c3d4e5f6', 'WH001', 'SPPE011',  20, false),
+
+-- Transaction 4 (d4e5f6a7): WH003 → ST0007, ST0008  [Milwaukee multi-store run]
+('d4e5f6a7-00000000000000000000000000000001', 'd4e5f6a7', 'WH003',  'CLTH018', -12, false),
+('d4e5f6a7-00000000000000000000000000000002', 'd4e5f6a7', 'WH003',  'SPPE020', -25, false),
+('d4e5f6a7-00000000000000000000000000000003', 'd4e5f6a7', 'WH003',  'PWTL019',  -6, false),
+('d4e5f6a7-00000000000000000000000000000004', 'd4e5f6a7', 'ST0007', 'CLTH018', -12, false),
+('d4e5f6a7-00000000000000000000000000000005', 'd4e5f6a7', 'ST0007', 'SPPE020', -25, false),
+('d4e5f6a7-00000000000000000000000000000006', 'd4e5f6a7', 'ST0008', 'PWTL019',  -6, false),
+
+-- Transaction 5 (e5f6a7b8): WH002 → ST0004  [Indianapolis local delivery]
+('e5f6a7b8-00000000000000000000000000000001', 'e5f6a7b8', 'WH002',  'SPPE012', -18, false),
+('e5f6a7b8-00000000000000000000000000000002', 'e5f6a7b8', 'WH002',  'PWTL014',  -3, false),
+('e5f6a7b8-00000000000000000000000000000003', 'e5f6a7b8', 'ST0004', 'SPPE012', -18, false),
+('e5f6a7b8-00000000000000000000000000000004', 'e5f6a7b8', 'ST0004', 'PWTL014',  -3, false),
+
+-- Transaction 6 (f6a7b8c9): WH001 → WH003  [Chicago→Milwaukee warehouse transfer]
+('f6a7b8c9-00000000000000000000000000000001', 'f6a7b8c9', 'WH001', 'CLTH007', -30, false),
+('f6a7b8c9-00000000000000000000000000000002', 'f6a7b8c9', 'WH001', 'PWTL008', -10, false),
+('f6a7b8c9-00000000000000000000000000000003', 'f6a7b8c9', 'WH003', 'CLTH007',  30, false),
+('f6a7b8c9-00000000000000000000000000000004', 'f6a7b8c9', 'WH003', 'PWTL008',  10, false),
+
+-- Transaction 7 (a7b8c9d0): WH002 → ST0005, ST0006  [Indianapolis multi-store run]
+('a7b8c9d0-00000000000000000000000000000001', 'a7b8c9d0', 'WH002',  'CLTH015', -10, false),
+('a7b8c9d0-00000000000000000000000000000002', 'a7b8c9d0', 'WH002',  'SPPE013', -20, false),
+('a7b8c9d0-00000000000000000000000000000003', 'a7b8c9d0', 'WH002',  'PWTL016',  -4, false),
+('a7b8c9d0-00000000000000000000000000000004', 'a7b8c9d0', 'ST0005', 'CLTH015', -10, false),
+('a7b8c9d0-00000000000000000000000000000005', 'a7b8c9d0', 'ST0005', 'SPPE013', -20, false),
+('a7b8c9d0-00000000000000000000000000000006', 'a7b8c9d0', 'ST0006', 'PWTL016',  -4, false),
+
+-- Transaction 8 (b8c9d0e1): WH003 → ST0009  [Milwaukee→Green Bay delivery]
+('b8c9d0e1-00000000000000000000000000000001', 'b8c9d0e1', 'WH003',  'CLTH022',  -8, false),
+('b8c9d0e1-00000000000000000000000000000002', 'b8c9d0e1', 'WH003',  'SPPE021', -15, false),
+('b8c9d0e1-00000000000000000000000000000003', 'b8c9d0e1', 'WH003',  'PWTL025',  -2, false),
+('b8c9d0e1-00000000000000000000000000000004', 'b8c9d0e1', 'ST0009', 'CLTH022',  -8, false),
+('b8c9d0e1-00000000000000000000000000000005', 'b8c9d0e1', 'ST0009', 'SPPE021', -15, false),
+('b8c9d0e1-00000000000000000000000000000006', 'b8c9d0e1', 'ST0009', 'PWTL025',  -2, false),
+
+-- Transaction 9 (c9d0e1f2): WH001 → WH002, ST0002  [mixed: warehouse transfer + store]
+('c9d0e1f2-00000000000000000000000000000001', 'c9d0e1f2', 'WH001',  'CLTH005', -25, false),
+('c9d0e1f2-00000000000000000000000000000002', 'c9d0e1f2', 'WH001',  'SPPE006', -40, false),
+('c9d0e1f2-00000000000000000000000000000003', 'c9d0e1f2', 'WH001',  'PWTL003',  -7, false),
+('c9d0e1f2-00000000000000000000000000000004', 'c9d0e1f2', 'WH002',  'CLTH005',  25, false),
+('c9d0e1f2-00000000000000000000000000000005', 'c9d0e1f2', 'WH002',  'SPPE006',  40, false),
+('c9d0e1f2-00000000000000000000000000000006', 'c9d0e1f2', 'ST0002', 'PWTL003',  -7, false),
+
+-- Transaction 10 (d0e1f2a3): WH003 → WH002  [Milwaukee→Indianapolis warehouse transfer]
+('d0e1f2a3-00000000000000000000000000000001', 'd0e1f2a3', 'WH003', 'SPPE024', -50, false),
+('d0e1f2a3-00000000000000000000000000000002', 'd0e1f2a3', 'WH003', 'PWTL022', -15, false),
+('d0e1f2a3-00000000000000000000000000000003', 'd0e1f2a3', 'WH002', 'SPPE024',  50, false),
+('d0e1f2a3-00000000000000000000000000000004', 'd0e1f2a3', 'WH002', 'PWTL022',  15, false),
+
+-- Transaction 11 (e1f2a3b4): WH001 → WH002 → ST0004, ST0005  [Chicago pickup, Indianapolis pickup, two store drops]
+('e1f2a3b4-00000000000000000000000000000001', 'e1f2a3b4', 'WH001',  'CLTH002',  18, false),
+('e1f2a3b4-00000000000000000000000000000002', 'e1f2a3b4', 'WH001',  'PWTL006',  12, false),
+('e1f2a3b4-00000000000000000000000000000003', 'e1f2a3b4', 'WH002',  'SPPE014',  24, false),
+('e1f2a3b4-00000000000000000000000000000004', 'e1f2a3b4', 'WH002',  'PWTL013',   9, false),
+('e1f2a3b4-00000000000000000000000000000005', 'e1f2a3b4', 'ST0004', 'CLTH002', -18, false),
+('e1f2a3b4-00000000000000000000000000000006', 'e1f2a3b4', 'ST0004', 'SPPE014', -24, false),
+('e1f2a3b4-00000000000000000000000000000007', 'e1f2a3b4', 'ST0005', 'PWTL006', -12, false),
+('e1f2a3b4-00000000000000000000000000000008', 'e1f2a3b4', 'ST0005', 'PWTL013',  -9, false)
+ON CONFLICT DO NOTHING;

@@ -31,6 +31,9 @@ namespace Switchyard.LogisticsAPI.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("CommittedDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("CustomerFirstName")
                         .IsRequired()
                         .HasColumnType("text");

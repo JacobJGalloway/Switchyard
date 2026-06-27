@@ -30,6 +30,7 @@ func main() {
 	viper.SetDefault("SMTP_PORT", "587")
 	viper.SetDefault("HOS_WARNING_THRESHOLD_HOURS", 2.0)
 	viper.SetDefault("DEADHEAD_WINDOW_HOURS", 4.0)
+	viper.SetDefault("DEADHEAD_CUTOFF_MINUTES", 30.0)
 	viper.SetDefault("DEADHEAD_SEARCH_WINDOW_HOURS", 2.0)
 	viper.SetDefault("LOADING_AGE_THRESHOLD_HOURS", 4.0)
 	viper.SetDefault("DEFAULT_CYCLE_LABEL", "60h/7d")
@@ -141,7 +142,7 @@ func main() {
 	driverHandler := handlers.NewDriverHandler(driverRepo, bolRepo, hosRepo, assignRepo, hosSvc, logClient, tmpl)
 	assignmentHandler := handlers.NewAssignmentHandler(assignRepo, driverRepo, bolRepo, equipRepo, hosSvc, wbSvc, notifySvc)
 	equipmentHandler := handlers.NewEquipmentHandler(equipRepo, notifySvc)
-	deadheadHandler := handlers.NewDeadheadHandler(pairingRepo, viper.GetFloat64("DEADHEAD_WINDOW_HOURS"))
+	deadheadHandler := handlers.NewDeadheadHandler(pairingRepo, viper.GetFloat64("DEADHEAD_WINDOW_HOURS"), viper.GetFloat64("DEADHEAD_CUTOFF_MINUTES"))
 	invoiceHandler := handlers.NewInvoiceHandler(invoiceRepo)
 	whiteboardHandler := handlers.NewWhiteboardHandler(wbSvc, tmpl, viper.GetString("REACT_BASE_URL"))
 	analyticsRepo := pgdb.NewAnalyticsRepo(pool)
@@ -213,6 +214,8 @@ func main() {
 		r.Patch("/api/assignment/{id}/depart", assignmentHandler.Depart)
 		r.Patch("/api/assignment/{id}/fulfill", assignmentHandler.Fulfill)
 		r.Patch("/api/assignment/{id}/deadhead", assignmentHandler.ConfirmDeadhead)
+		r.Post("/api/plan-bol/{id}/transfer", assignmentHandler.Transfer)
+		r.Get("/api/plan-bol/{id}/assignments", assignmentHandler.GetCustodyChain)
 
 		// Equipment
 		r.Get("/api/equipment", equipmentHandler.GetAll)

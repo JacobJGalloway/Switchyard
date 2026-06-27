@@ -8,4 +8,7 @@ public interface IItem
     string SKUMarker { get; set; }
     DateTime UnloadedDate { get; set; }
     bool Projected { get; set; }
+    decimal UnitPrice { get; set; }
+    string PriceCurrency { get; set; }
+    DateTime? PriceEffectiveDate { get; set; }
 }

@@ -7,7 +7,7 @@ namespace Switchyard.InventoryAPI.Controllers
 {
     [Authorize]
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/ppe")]
     public class PPEController(IPPEService ppeService) : ControllerBase
     {
         private readonly IPPEService _ppeService = ppeService;

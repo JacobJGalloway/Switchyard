@@ -135,9 +135,8 @@ Both APIs use Auth0 JWT bearer authentication. Permissions are claim-based:
 dotnet run --project Switchyard.InventoryAPI
 dotnet run --project Switchyard.LogisticsAPI
 
-# Go support services — start Postgres first
-# First time: docker run -d --name switchyard-pg -e POSTGRES_PASSWORD=password -e POSTGRES_DB=switchyard -p 5433:5432 postgres:16
-docker start switchyard-pg
+# Go support services — start Postgres first (docker-compose.yml at project root)
+docker compose up -d
 cd Switchyard-Go
 Get-Content .env | Where-Object { $_ -notmatch '^\s*#' -and $_ -match '=' } | ForEach-Object { $k,$v = $_ -split '=',2; Set-Item "Env:$($k.Trim())" $v.Trim() }
 go run ./cmd/main.go
@@ -158,14 +157,27 @@ go test ./...
 ## Wanted Features
 
 ### v1.3 — Next sprint
-- [ ] Mid-BOL transfer stops — `transfer` stop type; formal custody checkpoint for driver/equipment handoffs mid-route; requires `DriverBOLAssignment` restructuring
-- [ ] Demo reset / reseed script — date-relative seed so the board always looks like a live operational day at demo time
-- [ ] Two-company demo seed — Company A (Monday morning, default brand) and Company B (mid-week complexity, client palette override)
-- [ ] Dispatch board dark mode nuance rework + favicon swap
-- [ ] ARIA compliance audit — board columns, cards, icon-only buttons, skip-nav
-- [ ] Color contrast audit (WCAG AA) — verify all text/bg combinations across light and dark themes
+- [X] Mid-BOL transfer stops — `transfer` stop type; formal custody checkpoint for driver/equipment handoffs mid-route; requires `DriverBOLAssignment` restructuring
+- [X] Demo reset / reseed script — date-relative seed so the board always looks like a live operational day at demo time
+- [X] Two-company demo seed — Company A (Monday morning, default brand) and Company B (mid-week complexity, client palette override)
+- [X] Dispatch board dark mode nuance rework + favicon swap
+- [X] SKU unit price — extend inventory model to hold unit price; foundation for analytics such as revenue vs. profit charts and other displays
+- [X] SKU movement chart — warehouse filter, SKU filter, and chart dots all working; EF Core funcletizer bug bypassed by materializing before `Split()`
+- [X] Explicit routes on all controllers — plural kebab-case across all 10 controllers in both APIs; UI callers and Go integration clients updated to match
+- [X] Auth0 Google login — single-click through; `onRedirectCallback` + `isLoading` guard + `strictPort: true` in `vite.config.ts` to prevent port drift
+- [X] Receive-delivery endpoint — flip `Projected = false` and set `LocationId` when a BOL stop is confirmed; currently missing, seed mimics it manually
+- [X] Resting driver EXPIRED bug — drivers whose mandated rest has elapsed now graduate to Available instead of showing EXPIRED in the Resting sub-section
+- [X] Deadhead cutoff window — `DEADHEAD_CUTOFF_MINUTES` system config (default 30); deadhead pairings rejected when driver is within cutoff of their last stop; configurable for future per-driver or per-state overrides
+
+### v1.4 Wanted Features - Demo Stable Hardening / pilot-client ready; order flexible relative to v1.3 completion
+- [ ] Empty Return board state — new Available sub-section for drivers on empty return to originating warehouse; ETA visible for pre-planning next BOL assignment
+- [ ] Delivered column redesign — BOL-only close-out card; driver and equipment decouple from the BOL at last stop confirmation and route independently to Empty Return / Available / Maintenance; Delivered represents dispatch review, client notification, and final paperwork before archiving
+- [ ] Deadhead pairing — enforce `DEADHEAD_CUTOFF_MINUTES` window at the board level; pairing must be secured before driver reaches last stop or contract is voided; driver routes to Empty Return on last stop confirmation
 - [ ] Rolling refresh tokens for Auth0 sessions in place of fixed-expiry client secrets
-- [ ] SKU unit price — extend inventory model to hold unit price; enables revenue vs. profit analytics
+- [ ] Color contrast audit (WCAG AA) — verify all text/bg combinations across light and dark themes
+- [ ] ARIA compliance audit — board columns, cards, icon-only buttons, skip-nav
+- [ ] Document dispatch board card border language in a design note — border present = status alert (danger/warn/ok variants); no border = clean/good status. Borders carry semantic weight and should not be used decoratively.
+- [ ] CQRS read replica hardening — provision real Postgres read replicas for `switchyard_inventory` and `switchyard_logistics`; dev currently points read connections at the write database as a stand-in.
 
 ### Backlog
 - [ ] Read replica health endpoint — expose sync lag and InSync status
