@@ -20,7 +20,8 @@
 7. [Feature: Dispatch Board Dark Mode Nuance + Favicon](#7-feature-dispatch-board-dark-mode-nuance--favicon)
 8. [Feature: SKU Unit Price](#8-feature-sku-unit-price)
 9. [Human-in-the-Loop Checkpoints](#9-human-in-the-loop-checkpoints)
-10. [Out of Scope — v1.3](#10-out-of-scope--v13)
+10. [Out of Scope — v1.4](#10-out-of-scope--v14)
+11. [Backlog](#11-backlog)
 
 ---
 
@@ -61,6 +62,11 @@ These items are **pilot-required** but deferred from v1.3. They are isolated in 
 | 2 | Color contrast audit (WCAG AA) — light and dark themes | Isolated; no functional dependencies |
 | 3 | Rolling refresh tokens for Auth0 sessions | Isolated; no cross-functional dependencies |
 | 4 | Mid-week board display state | Refinement on top of two-company seed; not a demo blocker |
+| 5 | Empty Return board state | New Available sub-state column with ETA display; no schema changes required |
+| 6 | Delivered column redesign | Driver and equipment decouple from BOL at last stop; routes independently to Empty Return / Available / Maintenance |
+| 7 | Deadhead pairing enforcement | Board-level enforcement of `DEADHEAD_CUTOFF_MINUTES` window; driver routes to Empty Return on last stop confirmation |
+| 8 | Card border design language — design note | Border present = status alert (danger/warn/ok variants); no border = clean/good status; document in design reference |
+| 9 | CQRS read replica hardening | Provision real Postgres read replicas; dev currently points read connections at write DB as stand-in |
 
 > These land in v1.4 as a hardening sprint before the pilot goes live. They are not "someday" items.
 
@@ -243,14 +249,19 @@ These are points in the sprint where Claude Code should **pause and surface** ra
 
 ---
 
-## 10. Out of Scope — v1.3
+## 10. Out of Scope — v1.4
 
 The following are explicitly **not** in this sprint. Do not begin work on these without a scope change.
 
-- ARIA compliance audit
-- Color contrast audit (WCAG AA)
-- Rolling refresh tokens (Auth0)
-- Mid-week board display state refinement
-- Operating cost / tow rate analytics
-- Dead-head run support
-- Any features listed as "Backlog" in the README
+- Any items listed in [Backlog](#11-backlog)
+
+---
+
+## 11. Backlog
+
+These items have no current sprint assignment. Schedule when capacity allows.
+
+- Profit over revenue bar chart — requires both operating cost data (`BOLOperatingCost`, `DriverOperatingCost`, `TowCost` on `BreakdownRecord`) and BOL delivery values (revenue side); neither is surfaced in the UI yet. Schedule after next projects unless prioritized at pilot client request.
+- Read replica health endpoint — expose sync lag and `InSync` status
+- Extract User Management to a dedicated identity service when the data layer splits
+- Scalar branding — Switchyard logo and name above the API title; currently blocked by Scalar's limited logo support in the .NET package
