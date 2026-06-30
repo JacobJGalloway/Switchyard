@@ -156,7 +156,7 @@ go test ./...
 
 ## Wanted Features
 
-### v1.4 Wanted Features - Demo Stable Hardening / pilot-client ready; order flexible relative to v1.3 completion
+### v1.4 Wanted Features - Demo Stable Hardening / pilot-client ready
 - [ ] Empty Return board state — new Available sub-section for drivers on empty return to originating warehouse; ETA visible for pre-planning next BOL assignment
 - [ ] Delivered column redesign — BOL-only close-out card; driver and equipment decouple from the BOL at last stop confirmation and route independently to Empty Return / Available / Maintenance; Delivered represents dispatch review, client notification, and final paperwork before archiving
 - [ ] Deadhead pairing — enforce `DEADHEAD_CUTOFF_MINUTES` window at the board level; pairing must be secured before driver reaches last stop or contract is voided; driver routes to Empty Return on last stop confirmation
